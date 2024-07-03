@@ -1,0 +1,18 @@
+*  =ncurses= tutorials
+
+** How to configure
+
+#+BEGIN_SRC bash
+  ./configure.sh
+#+END_SRC
+
+
+** How to run
+
+#+BEGIN_SRC bash
+  # Compile `src/main.c and run it`
+  ./run.sh
+
+  # Compile `src/main_test.c and run it`
+  ./run_test.sh
+#+END_SRC
