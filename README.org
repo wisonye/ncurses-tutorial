@@ -1,4 +1,4 @@
-*  =ncurses= tutorials
+* =ncurses= (New Curses) tutorial
 
 ** How to configure
 
@@ -16,3 +16,348 @@
   # Compile `src/main_test.c and run it`
   ./run_test.sh
 #+END_SRC
+
+** What is =ncurses=
+
+Here is the info comes from =man ncurses=:
+
+The =ncurses= library routines give the user a terminal-independent method of updating character screens with reasonable optimization. This implementation is =new curses (ncurses)= and is the approved replacement for =4.4BSD= classic =curses=, which has been discontinued.
+
+This describes ncurses version 6.4 (patch 20230520).
+
+The =ncurses= library emulates the =curses= library of System V Release 4 UNIX, and XPG4 (X/Open Portability Guide) =curses= (also known as =XSI curses=). =XSI= stands for =X/Open System Interfaces Extension=.
+
+The =ncurses= library is freely redistributable in source form. Differences from the SVr4 curses are summarized under the EXTENSIONS and PORTABILITY sections below and described in detail in the respective EXTENSIONS, PORTABILITY and BUGS  sections of individual man pages.
+
+The =ncurses= library also provides many useful extensions, i.e., features which cannot be implemented by a simple add-on library but which require access to the internals of the library.
+
+A program using these routines must be linked with the =-lncurses= option, or (if it has been generated) with the debugging library =-lncurses_g=. (Your system integrator may also have installed these libraries under the names =-lcurses= and =-lcurses_g=.) The =ncurses_g= library generates trace logs (in a file called “trace” in the current directory) that describe =curses= actions.
+
+The =ncurses= package supports:
+
+- Overall screen, window and pad manipulation;
+- Output to windows and pads;
+- reading terminal input;
+- Control over terminal and curses input and output options;
+- Environment query routines;
+- Color manipulation;
+- Use of soft label keys;
+- Terminfo capabilities;
+- And access to low-level terminal-manipulation routines.
+
+
+** Install
+
+*** Arch Linux
+
+#+BEGIN_SRC bash
+  doas pacman --sync --info ncurses
+#+END_SRC
+
+
+** Basic hello world
+
+#+BEGIN_SRC c
+  #include <ncurses.h>
+
+  int main() {
+      initscr();
+      mvwprintw(stdscr,
+                0,
+                0,
+                "Hello world from ncurses");
+      // Press any key to exit.
+      getch();
+      endwin();
+  }
+#+END_SRC
+
+
+=initscr()= Create and init the main window (filled with the entire terminal screen) and return its pointer. Also, the return pointer points to the global variable =stdscr=.
+
+=mvprintw()= Move the cursor to the given position and print content to the given window.
+
+=getch()= Block and wait the user to type a single character in the given window (=stdscr= in this case) and return it's value, it causes the given window to refresh/redraw.
+
+=endwin()= The program must also call =endwin= for each terminal being used before exiting from curses. 
+
+All functions without the =w= prefix (e.g. =getch=, =printw=, =refresh()=, etc) are just a wrapped version of with =w= prefix (e.g. =wgetch=, =wprintw=, =wrefresh=, etc) by passing the =stdscr= as the first parameter!!!
+
+
+** Working with =Window=
+
+You can run =man curs_window= to get more detailed information
+
+*** Related functions
+
+#+BEGIN_SRC bash
+     newwin
+         Calling newwin creates and returns a pointer to a new window with the given number of lines and columns.  The upper left-hand corner of the window is at
+                line begin_y,
+                column begin_x
+
+         If either nlines or ncols is zero, they default to
+                LINES - begin_y and
+                COLS - begin_x.
+
+         A new full-screen window is created by calling newwin(0,0,0,0).
+
+         Regardless  of the function used for creating a new window (e.g., newwin, subwin, derwin, newpad), rather than a duplicate (with dupwin), all of the window modes are initialized to the default values.  These functions set window
+         modes after a window is created:
+
+                idcok, idlok, immedok, keypad, leaveok, nodelay, scrollok, setscrreg, syncok, wbkgdset, wbkgrndset, and wtimeout
+
+     delwin
+         Calling delwin deletes the named window, freeing all memory associated with it (it does not actually erase the window's screen image).  Subwindows must be deleted before the main window can be deleted.
+
+     mvwin
+         Calling mvwin moves the window so that the upper left-hand corner is at position (x, y).  If the move would cause the window to be off the screen, it is an error and the window is not moved.  Moving subwindows  is  allowed,  but
+         should be avoided.
+
+     subwin
+         Calling  subwin  creates and returns a pointer to a new window with the given number of lines, nlines, and columns, ncols.  The window is at position (begin_y, begin_x) on the screen.  The subwindow shares memory with the window
+         orig, so that changes made to one window will affect both windows.  When using this routine, it is necessary to call touchwin or touchline on orig before calling wrefresh on the subwindow.
+
+     derwin
+         Calling derwin is the same as calling subwin, except that begin_y and begin_x are relative to the origin of the window orig rather than the screen.  There is no difference between the subwindows and the derived windows.
+
+         Calling mvderwin moves a derived window (or subwindow) inside its parent window.  The screen-relative parameters of the window are not changed.  This routine is used to display different parts of the parent window  at  the  same
+         physical position on the screen.
+
+     dupwin
+         Calling dupwin creates an exact duplicate of the window win.
+
+     wsyncup
+         Calling wsyncup touches all locations in ancestors of win that are changed in win.  If syncok is called with second argument TRUE then wsyncup is called automatically whenever there is a change in the window.
+
+     wsyncdown
+         The wsyncdown routine touches each location in win that has been touched in any of its ancestor windows.  This routine is called by wrefresh, so it should almost never be necessary to call it manually.
+
+     wcursyncup
+         The routine wcursyncup updates the current cursor position of all the ancestors of the window to reflect the current cursor position of the window.
+
+  RETURN VALUE
+
+#+END_SRC
+
+
+*** Creating, drawing and updating window 
+
+You can use =newwin= to create a new window separated from the main window created by =initscr=.
+
+Here is the a few thing you need to know when working with =newwin=:
+
+**** Call =refresh= or =wrefresh(stdscr)= after =newwin= to notify that a new window has been created.
+
+#+BEGIN_SRC c
+    WINDOW *win = newwin(win_height, win_width, win_top, win_left);
+    refresh();
+#+END_SRC
+
+If don't do that and you don't have another function call to trigger =refresh()=, then you won't see the newly created window even you have called =wprintw= on that window!!!
+
+
+**** Update/redraw window
+
+When you call =wprintw= with the given window, it updates the memory data without drawing anything to the terminal screen, you need to call =wrefresh= to draw to the terminal screen.
+
+Because =wprintw= only affects the memory data, that's why you can call =wprintw= many times and then follow by a =wrefresh= to push all drawing to the terminl screen for getting better drawing performance.
+
+=wrefresh= only redraw the different/updated area, but there is a =redraw= function for you to force the entire window to be redrawn.
+
+#+BEGIN_SRC c
+  // Create a new window
+  const popup_window = create_popup_window(screen_width, screen_height);
+  wrefresh(stdscr);
+
+  //
+  // Draw once after all `wprintw` calls have been done.
+  //
+  mvwprintw(popup_window, ...);
+  mvwprintw(popup_window, ...);
+  mvwprintw(popup_window, ...);
+  wrefresh(popup_window);
+#+END_SRC
+
+
+**** About closing or destroying the created window
+
+Because =delwin= deletes the named window, freeing all memory associated with it, but it DOES NOT actually erase the window's screen image. That said the previously drawn window content is still there like a bug!!!
+
+That's why you have to either:
+
+1. Call =wclear()= and =wrefresh()= before =delwin()=.
+
+2. Call =redrawwin(parent_window)= after =delwin()= to update the parent window on screen.
+
+
+#+BEGIN_SRC c
+  // Create a new window
+  const popup_window = create_popup_window(screen_width, screen_height);
+
+  //
+  // Draw once after all `wprintw` calls have been done.
+  //
+  mvwprintw(popup_window, ...);
+  mvwprintw(popup_window, ...);
+  mvwprintw(popup_window, ...);
+  wrefresh(popup_window);
+
+  //
+  // Press a key to destory the popup window
+  //
+  wgetch(popup.win);
+  wclear(popup.win);    // Do this before `delwin`
+  wrefresh(popup.win);  // Do this before `delwin`
+  delwin(popup_window);
+
+  // redrawwin(stdscr); // Or do this after `delwin`
+#+END_SRC
+
+
+*** Getting window size and rect
+
+#+BEGIN_SRC c
+  typedef struct WindowSize {
+      int width;
+      int height;
+  } WindowSize;
+
+  WindowSize get_window_size(const WINDOW *win) {
+      int window_width, window_height;
+      getmaxyx(win, window_height, window_width);
+      return (WindowSize){.width = window_width, .height = window_height};
+  }
+
+  typedef struct {
+      int left;
+      int top;
+      int width;
+      int height;
+  } WindowRect;
+
+  WindowRect get_window_rect(const WINDOW *win) {
+      return (WindowRect){
+          .left   = getbegx(win),
+          .top    = getbegy(win),
+          .width  = getmaxx(win),
+          .height = getmaxy(win),
+      };
+  }
+#+END_SRC
+
+
+*** Popup window example
+
+#+BEGIN_SRC c
+  void print_question_and_answer(int screen_width, int screen_height) {
+      char input_char = 0;
+
+      //
+      // Clear the screen output and move cursor to init position if needed
+      // clear();
+      move(0, 0);
+
+      // Create new popup windows
+      const PopupWindow popup = create_popup_window(screen_width, screen_height);
+
+      //
+      // Print inside the popup window: Move cursor relative by the given window
+      // and print somthing
+      //
+      int row_in_popup = 2;
+      int col_in_popup = 4;
+      mvwprintw(popup.win,
+                row_in_popup,
+                col_in_popup,
+                "Which one is your favored OS:");
+
+      row_in_popup++;
+      mvwprintw(popup.win, row_in_popup, col_in_popup, "1. FreeBSD");
+
+      row_in_popup++;
+      mvwprintw(popup.win, row_in_popup, col_in_popup, "2. OpenBSD");
+
+      row_in_popup++;
+      mvwprintw(popup.win, row_in_popup, col_in_popup, "3. ArchLinux");
+      wrefresh(popup.win);  // Draw once after all `wprintw` calls have been done.
+
+      noecho();
+      input_char = getch();
+
+      row_in_popup += 2;
+
+      mvwprintw(popup.win,
+                row_in_popup,
+                col_in_popup,
+                "You choose: %c",
+                input_char);
+      mvwprintw(popup.win,
+                row_in_popup + 2,
+                col_in_popup,
+                "Press any key to close the popup window.");
+      wrefresh(popup.win);  // Draw once after all `wprintw` calls have been done.
+
+      //
+      // Press a key to destory the popup window
+      //
+      wgetch(popup.win);
+      wclear(popup.win);
+      wrefresh(popup.win);
+      delwin(popup.win);
+  } 
+#+END_SRC
+
+
+*** Drawing window border
+
+You can use =box= to draw the default border or use =wboard= to draw a customized border for the given window.
+
+#+BEGIN_SRC c
+  //
+  // `chtype` means a unsigned character (u32), e.g.:
+  // 'a'~'z', 'A'~ Z', '0'~'9'
+  // '*', '?', '>', '<', '=', etc.
+  // 
+  // '0' means use the default charater to fill the border!!!
+  //
+  box(WINDOW *win, chtype left_right, chtype top_bottom);
+
+  int wborder(WINDOW *win,
+      chtype left,
+      chtype right,
+      chtype top,
+      chtype bottom,
+      chtype top_left_corner,
+      chtype top_right_corner,
+      chtype bottom_left_corner,
+      chtype bottom_right_corner);
+#+END_SRC
+
+
+#+BEGIN_SRC c
+  //
+  // Draw a box with default border to the given window (area)
+  //
+  box(w.win, 0, 0);
+  wrefresh(w.win);
+
+  //
+  // Draw a custom border to the given window (area)
+  //
+  wborder(w.win, 'l', 'r', 't', 'b', '<', '>', '{', '}');
+  wrefresh(w.win);
+#+END_SRC
+
+
+
+** Handle user input
+
+*** Noecho
+
+*** Raw
+
+*** Delay and timeout
+
+
+
