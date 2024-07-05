@@ -20,7 +20,9 @@ set(CMAKE_CXX_FLAGS "-pedantic-errors -Wextra -Wall -Werror -std=gnu++20")
 # Main exectuable
 #
 add_executable("${PROJECT_NAME}"
-    "src/main.c")
+  "src/color.c"
+  "src/main.c"
+)
 
 #
 # Temporary testing code purpose

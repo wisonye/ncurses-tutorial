@@ -361,4 +361,368 @@ You can use =box= to draw the default border or use =wboard= to draw a customize
 *** Delay and timeout
 
 
+** Working with =Color=
+
+*** Check terminal color support and start using color
+
+#+BEGIN_SRC c
+  initscr();
+
+  if (!has_colors()) {
+      printf("\n>>> Terminal doesn't support colors");
+      return -1;
+  }
+  start_color();
+
+  endwin();
+#+END_SRC
+
+
+*** Create your own color
+
+**** Related functions
+
+=init_color= creates customized RGB color,
+=init_pair= creates foreground and background color pair
+=COLOR_PAIR= gets back the color attribute by the given color pair index
+
+- =int init_color(short color_index, short r, short g, short b)=
+
+- =int init_pair(color_pair_index, foreground_color_index, background_color_index)=
+
+- =COLOR_PAIR(color_pair_index)=
+
+After that, you can use =attron(color_attr)/wattron(win, color_attr)= and 
+=attroff(color_attr)/wattroff(win, color_attr)= to wrap the =wprintw= to render color outputs.
+
+
+**** HEX color (value) to short color value
+
+In =<ncurses.h>=, you can find the following type macros:
+
+#+BEGIN_SRC c
+  #define	NCURSES_COLOR_T short
+  #define	NCURSES_PAIRS_T short
+#+END_SRC
+
+That means if you use HEX as the colour value, you need the following formula to convert it into the short int colour value:
+
+~const r = (float)((float)0xRED_COLOR_HEX_HERE / (float)256) * 1000~
+
+
+**** Default color index
+
+Here are the default =ncurses= global variables and their values:
+
+#+BEGIN_SRC c
+  wprintw(stdscr,
+          "COLORS: %d\nCOLORS_PAIRS: %d\n\nCOLOR_BLACK: %d\nCOLOR_RED: "
+          "%d\nCOLOR_GREEN: %d\nCOLOR_YELLOW: %d\nCOLOR_BLUE: "
+          "%d\nCOLOR_MAGENTA: %d\nCOLOR_CYAN: %d\nCOLOR_WHITE: %d\n",
+                      COLORS,
+                      COLOR_PAIRS,
+          COLOR_BLACK,
+          COLOR_RED,
+          COLOR_GREEN,
+          COLOR_YELLOW,
+          COLOR_BLUE,
+          COLOR_MAGENTA,
+          COLOR_CYAN,
+          COLOR_WHITE);
+#+END_SRC
+
+
+Output:
+
+#+BEGIN_SRC bash
+  COLORS: 256
+  COLORS_PAIRS: 65536
+
+  COLOR_BLACK: 0
+  COLOR_RED: 1
+  COLOR_GREEN: 2
+  COLOR_YELLOW: 3
+  COLOR_BLUE: 4
+  COLOR_MAGENTA: 5
+  COLOR_CYAN: 6
+  COLOR_WHITE: 7
+#+END_SRC
+
+That's why you're only allowed to create no longer than =(256 - 8)= custom colours, and your customized colour index should start from =9= (as =0 ~ 8= is used for the predefined colours)!!!
+
+
+****  Example
+
+#+BEGIN_SRC c
+  #include <ncurses.h>
+
+  #define CUSTOM_COLOR_START_INDEX 9
+
+  int main() {
+      initscr();
+
+      if (!has_colors()) {
+          printf("\n>>> Terminal doesn't support colors");
+          return -1;
+      }
+      start_color();
+
+      //
+      // Create your own color
+      //
+      short color_index                  = CUSTOM_COLOR_START_INDEX;
+      const short foreground_color_index = color_index;
+      init_color(foreground_color_index,
+                 (float)((float)0xF4 / (float)256) * 1000,
+                 (float)((float)0x47 / (float)256) * 1000,
+                 (float)((float)0x47 / (float)256) * 1000);
+      color_index += 1;
+
+      const short background_color_index = color_index;
+      init_color(background_color_index,
+                 (float)((float)0x23 / (float)256) * 1000,
+                 (float)((float)0x21 / (float)256) * 1000,
+                 (float)((float)0x1B / (float)256) * 1000);
+      color_index += 1;
+
+      const short my_color_pair_index = 1;
+      init_pair(my_color_pair_index,
+                foreground_color_index,
+                background_color_index);
+      const short selected_color_attr = COLOR_PAIR(my_color_pair_index);
+
+      //
+      // Use selected color to draw
+      //
+      wattron(stdscr, selected_color_attr);
+      wprintw(stdscr, "Here is the selected color:)");
+      wattroff(stdscr, selected_color_attr);
+
+      // Press any key to exit.
+      getch();
+      endwin();
+      return 0;
+  }
+#+END_SRC
+
+
+*** Color theme
+
+Here is the color theme example:
+
+**** =color.h=
+
+#+BEGIN_SRC c
+  #include <ncurses.h>
+
+  #define COLOR_PAIR_SIZE 10
+  #define CUSTOMIZE_COLOR_START_INDEX 9
+  #define CUSTOMIZE_COLOR_PAIR_START_INDEX 1
+
+  // `NCURSES_COLOR_T` -> `short`
+
+  typedef struct Color {
+      NCURSES_COLOR_T r;
+      NCURSES_COLOR_T g;
+      NCURSES_COLOR_T b;
+  } Color;
+
+  typedef struct ColorPair {
+      // This usesd for `init_pair`
+      NCURSES_COLOR_T color_pair_index;
+      // Not useful, just for debugging
+      NCURSES_COLOR_T foreground_color_index;
+      NCURSES_COLOR_T background_color_index;
+
+      const char *name;
+      Color foreground;
+      Color background;
+  } ColorPair;
+
+  typedef struct ColorTheme {
+      const char *name;
+      ColorPair pairs[COLOR_PAIR_SIZE];
+
+  } ColorTheme;
+
+  ColorTheme CT_init();
+#+END_SRC
+
+
+**** =color.c=
+
+#+BEGIN_SRC c
+  #include "color.h"
+
+  #include <ncurses.h>
+
+  ColorTheme CT_init() {
+      short temp_color_index      = CUSTOMIZE_COLOR_START_INDEX;
+      short temp_color_pair_index = CUSTOMIZE_COLOR_PAIR_START_INDEX;
+
+      ColorTheme self = (ColorTheme){
+          .name = "TronLegacy",
+          .pairs =
+              {
+                  (ColorPair){
+                      .color_pair_index       = -1,
+                      .foreground_color_index = -1,
+                      .background_color_index = -1,
+                      .name                   = "Tron Red",
+                      .foreground =
+                          (Color){
+                              .r = (float)((float)0xF4 / (float)256) * 1000,
+                              .g = (float)((float)0x47 / (float)256) * 1000,
+                              .b = (float)((float)0x47 / (float)256) * 1000,
+                          },
+                      .background =
+                          (Color){
+                              .r = (float)((float)0x23 / (float)256) * 1000,
+                              .g = (float)((float)0x21 / (float)256) * 1000,
+                              .b = (float)((float)0x1B / (float)256) * 1000,
+                          },
+                  },
+                  (ColorPair){
+                      .color_pair_index       = -1,
+                      .foreground_color_index = -1,
+                      .background_color_index = -1,
+                      .name                   = "Tron Orange",
+                      .foreground =
+                          (Color){
+                              .r = (float)((float)0xFF / (float)256) * 1000,
+                              .g = (float)((float)0x9F / (float)256) * 1000,
+                              .b = (float)((float)0x1C / (float)256) * 1000,
+                          },
+                      .background =
+                          (Color){
+                              .r = (float)((float)0x23 / (float)256) * 1000,
+                              .g = (float)((float)0x21 / (float)256) * 1000,
+                              .b = (float)((float)0x1B / (float)256) * 1000,
+                          },
+                  },
+                  (ColorPair){
+                      .color_pair_index       = -1,
+                      .foreground_color_index = -1,
+                      .background_color_index = -1,
+                      .name                   = "Tron Blue",
+                      .foreground =
+                          (Color){
+                              .r = (float)((float)0x6F / (float)256) * 1000,
+                              .g = (float)((float)0xC3 / (float)256) * 1000,
+                              .b = (float)((float)0xDF / (float)256) * 1000,
+                          },
+                      .background =
+                          (Color){
+                              .r = (float)((float)0x23 / (float)256) * 1000,
+                              .g = (float)((float)0x21 / (float)256) * 1000,
+                              .b = (float)((float)0x1B / (float)256) * 1000,
+                          },
+                  },
+                  (ColorPair){
+                      .color_pair_index       = -1,
+                      .foreground_color_index = -1,
+                      .background_color_index = -1,
+                      .name                   = "Tron Yellow",
+                      .foreground =
+                          (Color){
+                              .r = (float)((float)0xFF / (float)256) * 1000,
+                              .g = (float)((float)0xE6 / (float)256) * 1000,
+                              .b = (float)((float)0x4D / (float)256) * 1000,
+                          },
+                      .background =
+                          (Color){
+                              .r = (float)((float)0x23 / (float)256) * 1000,
+                              .g = (float)((float)0x21 / (float)256) * 1000,
+                              .b = (float)((float)0x1B / (float)256) * 1000,
+                          },
+                  },
+              },
+      };
+
+      for (int index = 0; index < COLOR_PAIR_SIZE; index++) {
+          //
+          // `init_color` creates RGB color
+          //
+          // init_color(color_index, r, g, b)
+          //
+          const short foreground_color_index = temp_color_index;
+          init_color(foreground_color_index,
+                     self.pairs[index].foreground.r,
+                     self.pairs[index].foreground.g,
+                     self.pairs[index].foreground.b);
+          self.pairs[index].foreground_color_index = foreground_color_index;
+          temp_color_index += 1;
+
+          const short background_color_index = temp_color_index;
+          init_color(background_color_index,
+                     self.pairs[index].background.r,
+                     self.pairs[index].background.g,
+                     self.pairs[index].background.b);
+          self.pairs[index].background_color_index = background_color_index;
+          temp_color_index += 1;
+
+          //
+          // `init_pair` creates foreground and background color pair
+          //
+          // init_pair(color_pair_index, foreground_color_index, background_color_index)
+          //
+          init_pair(temp_color_pair_index,
+                    foreground_color_index,
+                    background_color_index);
+          self.pairs[index].color_pair_index = temp_color_pair_index;
+          temp_color_pair_index += 1;
+      }
+
+      return self;
+  }
+#+END_SRC
+
+
+**** =main.c=
+
+#+BEGIN_SRC c
+   #include <ncurses.h>
+
+   int main() {
+      initscr();
+
+      if (!has_colors()) {
+          printf("\n>>> Terminal doesn't support colors");
+          return -1;
+      }
+      start_color();
+
+      ColorTheme theme = CT_init();
+      mvwprintw(stdscr, 0, 0, "Loaded color theme: %s", theme.name);
+
+      move(2, 0);
+      // for (int index = 0; index < COLOR_PAIR_SIZE; index++) {
+      for (int index = 0; index < 4; index++) {
+          const ColorPair *cp        = &theme.pairs[index];
+          const short selected_color = COLOR_PAIR(cp->color_pair_index);
+          attron(selected_color);
+
+          wprintw(
+              stdscr,
+              "[ Color pair name ] {\n\tname: %s\n\tcp_index: "
+              "%d\n\tforeground_color_index: %d\n\t"
+              "background_color_index: %d\n\tforeground: {\n\t\tr: %d\n\t\tg: "
+              "%d\n\t\tb: %d\n\t}\n}\n",
+              cp->name,
+              cp->color_pair_index,
+              cp->foreground_color_index,
+              cp->background_color_index,
+              cp->foreground.r,
+              cp->foreground.g,
+              cp->foreground.b);
+
+          attroff(selected_color);
+      }
+
+      // Press any key to exit.
+      getch();
+      endwin();
+      return 0;
+  } 
+#+END_SRC
 
