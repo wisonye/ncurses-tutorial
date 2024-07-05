@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <string.h>
 
 #include "color.h"
 
@@ -93,7 +94,7 @@ int main_2() {
     return 0;
 }
 
-int main() {
+int main_4() {
     initscr();
 
     if (!has_colors()) {
@@ -182,3 +183,45 @@ int main() {
 /*     endwin(); */
 /*     return 0; */
 /* } */
+
+int main() {
+    initscr();
+    noecho();
+    raw();
+    keypad(stdscr, true);
+
+    if (!has_colors() || !can_change_color()) {
+        printf("\n>>> Terminal doesn't support colors");
+        return -1;
+    }
+    start_color();
+
+    wprintw(stdscr, "Press 'Q' key to exit:)\n\n");
+
+    uint8_t c = 0;
+    while ((c = wgetch(stdscr)) != 'Q') {
+        //
+        // 1. Compare string with `keyname(c)`
+        //
+        const char *typed_key = keyname(c);
+        if (strcmp(typed_key, "^A") == 0) {
+            wprintw(stdscr, "You pressed: <C-A>, HEX: 0x%.2X\n", c);
+        }
+        //
+        // 2. Like this
+        //
+		else if (c == ('I' & 0x1F)) {
+            wprintw(stdscr, "You pressed: <C-I>, HEX: 0x%.2X\n", c);
+        }
+		else {
+            wprintw(stdscr,
+                    "You pressed: %s, HEX: 0x%.2X %s\n",
+                    typed_key,
+                    c,
+                    typed_key[0] == '^' ? "(modify key: CTRL)" : "");
+        }
+    }
+
+    endwin();
+    return 0;
+}

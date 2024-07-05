@@ -352,13 +352,217 @@ You can use =box= to draw the default border or use =wboard= to draw a customize
 
 
 
+** Working with =Attributes=
+
+Here is the common pattern to apply attributes to printed text:
+
+#+BEGIN_SRC c
+  wattron(win, ATTR_HERE);
+  wprintw(win, ....)
+  wattroff(win, ATTR_HERE);
+#+END_SRC
+
+And here are the supported attributes:
+
+#+BEGIN_SRC c
+  #define A_NORMAL	(1U - 1U)
+  #define A_CHARTEXT	(NCURSES_BITS(1U,0) - 1U)
+  #define A_COLOR		NCURSES_BITS(((1U) << 8) - 1U,0)
+  #define A_STANDOUT	NCURSES_BITS(1U,8)
+  #define A_UNDERLINE	NCURSES_BITS(1U,9)
+  #define A_REVERSE	NCURSES_BITS(1U,10)
+  #define A_BLINK		NCURSES_BITS(1U,11)
+  #define A_DIM		NCURSES_BITS(1U,12)
+  #define A_BOLD		NCURSES_BITS(1U,13)
+  #define A_ALTCHARSET	NCURSES_BITS(1U,14)
+  #define A_INVIS		NCURSES_BITS(1U,15)
+  #define A_PROTECT	NCURSES_BITS(1U,16)
+  #define A_HORIZONTAL	NCURSES_BITS(1U,17)
+  #define A_LEFT		NCURSES_BITS(1U,18)
+  #define A_LOW		NCURSES_BITS(1U,19)
+  #define A_RIGHT		NCURSES_BITS(1U,20)
+  #define A_TOP		NCURSES_BITS(1U,21)
+  #define A_VERTICAL	NCURSES_BITS(1U,22)
+
+  #if 1
+  #define A_ITALIC	NCURSES_BITS(1U,23)	/* ncurses extension */
+#+END_SRC
+
+
+You can =|= a couple of attributes together, here is an example:
+
+#+BEGIN_SRC c
+  wattron(stdscr, A_ITALIC | A_BOLD | A_REVERSE);
+  wprintw(stdscr, "Here is the 'A_ITALIC | A_BOLD | A_REVERSE' attribute effect.\n");
+  wattroff(stdscr, A_ITALIC | A_BOLD | A_REVERSE);
+#+END_SRC
+
+
+*** How to change the applied attributes
+
+After applying the attributes to the printed text, you can change their attributes on the fly by calling
+#+BEGIN_SRC c
+  wchgat (
+      WINDOW *,         // WINDOW *
+      int,              // How many characters to will be affected from current
+                        // cursor position, `-1` means to the end of line
+      attr_t,           // New attributes to override
+      NCURSES_PAIRS_T,  // Color pair index
+      const void *      // Set to `NULL`
+  );
+#+END_SRC
+
+#+BEGIN_SRC c
+  wattron(stdscr, A_ITALIC | A_BOLD | A_REVERSE);
+  wprintw(stdscr, "Here is the 'A_ITALIC | A_BOLD | A_REVERSE' attribute effect.\n");
+  wattroff(stdscr, A_ITALIC | A_BOLD | A_REVERSE);
+
+  int cur_x = 0, cur_y = 0;
+  getyx(stdscr, cur_y, cur_x);
+        init_pair(8, COLOR_RED, COLOR_BLACK);
+  wattron(stdscr, A_ITALIC | COLOR_PAIR(8));
+  mvwprintw(stdscr, cur_y - 1, 1, "cur_y: %d, cur_x: %d", cur_y, cur_x);
+  wattroff(stdscr, A_ITALIC | COLOR_PAIR(8));
+  mvwchgat(stdscr, cur_y - 1, 0, strlen(text), A_NORMAL, 8, NULL);
+#+END_SRC
+
+
 ** Handle user input
 
-*** Noecho
+*** Input options
 
-*** Raw
+For more details, read =man curs_inopts=.
 
-*** Delay and timeout
+- =noecho=: Doesn't print the pressed key.
+
+- =cbreak=: User input available to the program immediately no need to wait for a =<CR>=, you see what typed.
+- =nocbreak=: TTY driver buffers the what you typed until you press =<CR>=.
+
+- =raw=: Same with =cbreak= except it passes through the typed key uninterpreted, that's why =<C-c>= doesn't terminate your program in =Raw Mode=!!!
+
+- =keypad (WINDOW *,bool);=: Enable number key and arrow key or not, disabled by default.
+  You have to enable this if you want to capture the following keys:
+
+  #+BEGIN_SRC c
+    #define KEY_DOWN	0402		/* down-arrow key */
+    #define KEY_UP	0403		/* up-arrow key */
+    #define KEY_LEFT	0404		/* left-arrow key */
+    #define KEY_RIGHT	0405		/* right-arrow key */
+    #define KEY_HOME	0406		/* home key */
+    #define KEY_F0	0410		/* Function keys.  Space for 64 */
+    #define KEY_F(n)	(KEY_F0+(n))	/* Value of function key n */
+    ...
+  #+END_SRC
+
+
+*** Related functions
+
+#+BEGIN_SRC c
+  int getch(void) // Wait for a single char from the cursor position
+  int wgetch(WINDOW *win)
+  int mvwgetch (WINDOW *win, int row, int col);
+
+  int delch(void) // Delete a single char from the cursor position
+  int wdelch(WINDOW *win)
+  int mvwdelch (WINDOW *win, int row, int col);
+#+END_SRC
+
+Any =getch= functions will invoke =wrefresh=!!!
+
+
+*** Capture modify key (Ctrl, Alt)
+
+You got 2 ways to detected whether =Ctrl= is pressed of not:
+
+#+BEGIN_SRC c
+  uint8_t c = 0;
+  while ((c = wgetch(stdscr)) != 'Q') {
+      //
+      // 1. Compare string with `keyname(c)`
+      //
+      const char *typed_key = keyname(c);
+      if (strcmp(typed_key, "^A") == 0) {
+          wprintw(stdscr, "You pressed: <C-A>, HEX: 0x%.2X\n", c);
+      }
+      //
+      // 2. Like this
+      //
+              else if (c == ('I' & 0x1F)) {
+          wprintw(stdscr, "You pressed: <C-I>, HEX: 0x%.2X\n", c);
+      }
+              else {
+          wprintw(stdscr,
+                  "You pressed: %s, HEX: 0x%.2X %s\n",
+                  typed_key,
+                  c,
+                  typed_key[0] == '^' ? "(modify key: CTRL)" : "");
+      }
+  }
+#+END_SRC
+
+
+Full example:
+
+#+BEGIN_SRC c
+  #include <ncurses.h>
+  #include <string.h>
+ 
+  int main() {
+      initscr();
+      noecho();
+      raw();
+      keypad(stdscr, true);
+
+      if (!has_colors() || !can_change_color()) {
+          printf("\n>>> Terminal doesn't support colors");
+          return -1;
+      }
+      start_color();
+
+      wprintw(stdscr, "Press 'Q' key to exit:)\n\n");
+
+      uint8_t c = 0;
+      while ((c = wgetch(stdscr)) != 'Q') {
+          //
+          // 1. Compare string with `keyname(c)`
+          //
+          const char *typed_key = keyname(c);
+          if (strcmp(typed_key, "^A") == 0) {
+              wprintw(stdscr, "You pressed: <C-A>, HEX: 0x%.2X\n", c);
+          }
+          //
+          // 2. Like this
+          //
+                  else if (c == ('I' & 0x1F)) {
+              wprintw(stdscr, "You pressed: <C-I>, HEX: 0x%.2X\n", c);
+          }
+                  else {
+              wprintw(stdscr,
+                      "You pressed: %s, HEX: 0x%.2X %s\n",
+                      typed_key,
+                      c,
+                      typed_key[0] == '^' ? "(modify key: CTRL)" : "");
+          }
+      }
+
+      endwin();
+      return 0;
+  } 
+#+END_SRC
+
+
+*** Special keys you need to know
+
+#+BEGIN_SRC c
+  <TAB>  = <C-I> = 0x01
+  <DOWN> = <C-B> = 0x02
+  <UP>   = <C-C> = 0x03
+  <LEFT> = <C-D> = 0x04
+  <RIGHT>= <C-D> = 0x05
+  <CR>   = <C-J> = 0x0A
+#+END_SRC
+
+Those are the special keys with the same HEX value, that's why you can't treat =<TAB>= and =<C-I>= as different keybindings, as they are equal in terminal!!! Same thing with =<C-S-A>= and =<C-A>=.
 
 
 ** Working with =Color=
@@ -368,7 +572,7 @@ You can use =box= to draw the default border or use =wboard= to draw a customize
 #+BEGIN_SRC c
   initscr();
 
-  if (!has_colors()) {
+  if (!has_colors() || !can_change_color())) {
       printf("\n>>> Terminal doesn't support colors");
       return -1;
   }
