@@ -1,20 +1,35 @@
 * =ncurses= (New Curses) tutorial
 
-** How to configure
+** C verison
+
+*** How to configure
 
 #+BEGIN_SRC bash
+  cd c
   ./configure.sh
 #+END_SRC
 
 
-** How to run
+*** How to run
 
 #+BEGIN_SRC bash
   # Compile `src/main.c and run it`
+  cd c
   ./run.sh
 
   # Compile `src/main_test.c and run it`
+  cd c
   ./run_test.sh
+#+END_SRC
+
+
+** Hare version
+
+*** How to run
+
+#+BEGIN_SRC bash
+  cd hare
+  hare run src/XXX.ha
 #+END_SRC
 
 

@@ -94,7 +94,7 @@ int main_2() {
     return 0;
 }
 
-int main_4() {
+int main() {
     initscr();
 
     if (!has_colors()) {
@@ -184,7 +184,7 @@ int main_4() {
 /*     return 0; */
 /* } */
 
-int main() {
+int main_5() {
     initscr();
     noecho();
     raw();

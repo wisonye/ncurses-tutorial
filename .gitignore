@@ -1,8 +1,5 @@
-build
-.cache
-temp_build
-clangd.core
-zig-out
-zig-cache
-main
-main_test
+c/build
+c/.cache
+c/temp_build
+c/clangd.core
+hare/out
