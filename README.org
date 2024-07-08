@@ -27,9 +27,11 @@
 
 *** How to run
 
+Make sure to link to the =ncursesw= (wide character supported) library!!!
+
 #+BEGIN_SRC bash
   cd hare
-  hare run src/XXX.ha
+  hare run -lncursesw src/XXX.ha
 #+END_SRC
 
 
@@ -98,6 +100,54 @@ The =ncurses= package supports:
 =endwin()= The program must also call =endwin= for each terminal being used before exiting from curses. 
 
 All functions without the =w= prefix (e.g. =getch=, =printw=, =refresh()=, etc) are just a wrapped version of with =w= prefix (e.g. =wgetch=, =wprintw=, =wrefresh=, etc) by passing the =stdscr= as the first parameter!!!
+
+
+** Workding with unicode
+
+A few steps to support drawing unicode:
+
+1. Add =#include <locale.h>=
+
+2. Call =setlocale(LC_ALL, "");= before =initscr()=
+
+3. Use =%lc= or =%ls= to in the =printw= (or any variant functions)
+
+4. Optionally, if you want to call any =wide char= related funcitons (with a =w= prefix) e.g =addwstr=, you MUST define the =_XOPEN_SOURCE_EXTENDED= macro to compile your program.
+
+   Here is a sample setting to put into your CMake:
+
+   #+BEGIN_SRC cmake
+     target_compile_definitions("${PROJECT_NAME}" PRIVATE _XOPEN_SOURCE_EXTENDED)
+   #+END_SRC
+
+
+But keep that in mind, any =not wide char= related functions (witout a =w= prefix) e.g =wborder/addch/etc= don't support unicode!!! (It draws nothing to the terminal)
+
+
+Example:
+
+#+BEGIN_SRC c
+  #include <locale.h>
+  #include <ncurses.h>
+
+  int main() {
+      setlocale(LC_ALL, "");
+      initscr();
+
+      move(2,2);
+      wprintw(stdscr, "Unicode symboles: %lc, %lc", L'╝', L'╮');
+
+      move(4,2);
+      addstr("╝");
+      addstr("┏━┓");
+
+      // Press any key to exit.
+      getch();
+      endwin();
+
+      return 0;
+  }
+#+END_SRC
 
 
 ** Working with =Window=

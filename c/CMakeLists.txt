@@ -35,13 +35,14 @@ add_executable("${PROJECT_NAME}-test" "src/main_test.c")
 # target_link_libraries("${PROJECT_NAME}" raylib)
 # target_link_libraries("${PROJECT_NAME}_test" raylib)
 # 
-target_link_libraries("${PROJECT_NAME}" ncurses)
-target_link_libraries("${PROJECT_NAME}-test" ncurses)
+target_link_libraries("${PROJECT_NAME}" ncursesw)
+target_link_libraries("${PROJECT_NAME}-test" ncursesw)
 
 # target_link_libraries("copying_machine_test" pthread)
 
 
-target_compile_definitions("${PROJECT_NAME}" PRIVATE ENABLE_DEBUG_LOG)
+target_compile_definitions("${PROJECT_NAME}" PRIVATE ENABLE_DEBUG_LOG _XOPEN_SOURCE_EXTENDED)
+target_compile_definitions("${PROJECT_NAME}-test" PRIVATE ENABLE_DEBUG_LOG _XOPEN_SOURCE_EXTENDED)
 
 #
 # Debug log
