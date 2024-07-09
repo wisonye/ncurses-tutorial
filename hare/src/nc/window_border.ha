@@ -37,9 +37,9 @@ export type BorderStyleRegular = void;
 export type BorderStyleBold = void;
 export type BorderStyleRounded = void;
 export type BorderStyleDouble = void;
-export type BorderStyleCustomAscii = BoxBorderChar;
-export type BorderStyleCustomUtf8 = BoxBorderWideChar;
-export type BoxBorderStyle = (
+export type BorderStyleCustomAscii = WindowBorderChar;
+export type BorderStyleCustomUtf8 = WindowBorderWideChar;
+export type WindowBorderStyle = (
 	BorderStyleRegular |
 	BorderStyleBold |
 	BorderStyleRounded |
@@ -50,7 +50,7 @@ export type BoxBorderStyle = (
 //
 // ASCII range border char
 //
-export type BoxBorderChar = struct {
+export type WindowBorderChar = struct {
 	top_left: u8,
 	top: u8,
 	top_right: u8,
@@ -64,7 +64,7 @@ export type BoxBorderChar = struct {
 //
 // UTF8 range border char
 //
-export type BoxBorderWideChar = struct {
+export type WindowBorderWideChar = struct {
 	top_left: rune,
 	top: rune,
 	top_right: rune,
@@ -75,19 +75,19 @@ export type BoxBorderWideChar = struct {
 	bottom_right: rune,
 };
 
-// type BoxBorderAttr = struct {
-// 	top: pen,
-// 	bottom: pen,
-// 	left: pen,
-// 	right: pen,
-// };
-
-export type BoxBorderConfig = struct {
-	style: BoxBorderStyle,
-	// color: (void | BoxBorderPen),
+export type WindowBorderColor = struct {
+	top: VideoAttr,
+	bottom: VideoAttr,
+	left: VideoAttr,
+	right: VideoAttr,
 };
 
-const BoldBorderChar = BoxBorderWideChar {
+export type WindowBorderConfig = struct {
+	style: WindowBorderStyle,
+	color: (void | WindowBorderColor),
+};
+
+const BoldBorderChar = WindowBorderWideChar {
 	top_left = '┏',
 	top = '━',
 	top_right = '┓',
@@ -98,7 +98,7 @@ const BoldBorderChar = BoxBorderWideChar {
 	bottom_right = '┛',
 };
 
-const RoundedBorderChar = BoxBorderWideChar {
+const RoundedBorderChar = WindowBorderWideChar {
 	top_left = '╭',
 	top = '─',
 	top_right = '╮',
@@ -109,7 +109,7 @@ const RoundedBorderChar = BoxBorderWideChar {
 	bottom_right = '╯',
 };
 
-const DoubleBorderChar = BoxBorderWideChar {
+const DoubleBorderChar = WindowBorderWideChar {
 	top_left = '╔',
 	top = '═',
 	top_right = '╗',
@@ -125,68 +125,134 @@ const DoubleBorderChar = BoxBorderWideChar {
 // `wborder` function only accepts u8 ASCII char, so we must draw the wide char
 // border ourselves.
 //
-fn draw_window_border_with_wide_char(win: const nullable *WINDOW, draw_char: BoxBorderWideChar) void = {
+fn draw_window_border_with_wide_char(
+	win: const nullable *WINDOW,
+	draw_char: WindowBorderWideChar,
+	draw_color: (void | WindowBorderColor)) void = {
 	const rect = get_window_rect(win);
 	
 	//
 	// Top left
 	//
-	mvwprintw(win, 0, 0, c::nulstr("%lc\0"), draw_char.top_left);
+	match (draw_color) {
+		case void => mvwprintw(win, 0, 0, c::nulstr("%lc\0"), draw_char.top_left);
+		case let color: WindowBorderColor => {
+			wattr_on(win, color.top);
+			mvwprintw(win, 0, 0, c::nulstr("%lc\0"), draw_char.top_left);
+			wattr_off(win, color.top);
+		};
+	};
 
 	//
 	// Top
 	//
 	let draw_len: size = (rect.width - 1): size;
 	for( let index=1z; index < draw_len; index +=1) {
-		wprintw(win, c::nulstr("%lc\0"), draw_char.top);
+		match (draw_color) {
+			case void => wprintw(win, c::nulstr("%lc\0"), draw_char.top);
+			case let color: WindowBorderColor => {
+				wattr_on(win, color.top);
+				wprintw(win, c::nulstr("%lc\0"), draw_char.top);
+				wattr_off(win, color.top);
+			};
+		};
 	};
 
 	//
 	// Top right
 	//
-	wprintw(win, c::nulstr("%lc\0"), draw_char.top_right);
+	match (draw_color) {
+		case void => wprintw(win, c::nulstr("%lc\0"), draw_char.top_right);
+		case let color: WindowBorderColor => {
+			wattr_on(win, color.top);
+			wprintw(win, c::nulstr("%lc\0"), draw_char.top_right);
+			wattr_off(win, color.top);
+		};
+	};
+
 
 	//
 	// Left & right
 	//
 	let draw_count: size = (rect.height - 1): size;
 	for( let index=1z; index < draw_count; index +=1) {
-		mvwprintw(win, index: int, 0, c::nulstr("%lc\0"), draw_char.left);
-		mvwprintw(win, index: int, rect.width-1, c::nulstr("%lc\0"), draw_char.right);
+		match (draw_color) {
+			case void => {
+				mvwprintw(win, index: int, 0, c::nulstr("%lc\0"), draw_char.left);
+				mvwprintw(win, index: int, rect.width-1, c::nulstr("%lc\0"),
+					draw_char.right);
+			};
+			case let color: WindowBorderColor => {
+				wattr_on(win, color.left);
+				mvwprintw(win, index: int, 0, c::nulstr("%lc\0"), draw_char.left);
+				wattr_off(win, color.left);
+
+				wattr_on(win, color.right);
+				mvwprintw(win, index: int, rect.width-1, c::nulstr("%lc\0"),
+					draw_char.right);
+				wattr_off(win, color.right);
+			};
+		};
 	};
 
 	//
 	// Bottom left
 	//
-	mvwprintw(win, rect.height - 1, 0, c::nulstr("%lc\0"), draw_char.bottom_left);
+	match (draw_color) {
+		case void => mvwprintw(win, rect.height - 1, 0, c::nulstr("%lc\0"),
+			draw_char.bottom_left);
+		case let color: WindowBorderColor => {
+			wattr_on(win, color.bottom);
+			mvwprintw(win, rect.height - 1, 0, c::nulstr("%lc\0"),
+				draw_char.bottom_left);
+			wattr_off(win, color.bottom);
+		};
+	};
 
 	//
 	// bottom
 	//
 	draw_len = (rect.width - 1): size;
 	for( let index=1z; index < draw_len; index +=1) {
-		wprintw(win, c::nulstr("%lc\0"), draw_char.bottom);
+		match (draw_color) {
+			case void => wprintw(win, c::nulstr("%lc\0"), draw_char.bottom);
+			case let color: WindowBorderColor => {
+				wattr_on(win, color.bottom);
+				wprintw(win, c::nulstr("%lc\0"), draw_char.bottom);
+				wattr_off(win, color.bottom);
+			};
+		};
 	};
 
 	//
 	// Bottom right
 	//
-	wprintw(win, c::nulstr("%lc\0"), draw_char.bottom_right: chtype);
+	match (draw_color) {
+		case void => wprintw(win, c::nulstr("%lc\0"), draw_char.bottom_right: chtype);
+		case let color: WindowBorderColor => {
+			wattr_on(win, color.bottom);
+			wprintw(win, c::nulstr("%lc\0"), draw_char.bottom_right: chtype);
+			wattr_off(win, color.bottom);
+		};
+	};
 };
 
-export fn draw_window_border(win: const nullable *WINDOW, config: const *BoxBorderConfig) void = {
+//
+//
+//
+export fn draw_window_border(win: const nullable *WINDOW, config: const *WindowBorderConfig) void = {
 	match (config.style) {
 	case  BorderStyleRegular => {
 		box(win, 0, 0);
 	};
 	case  BorderStyleBold => {
-		draw_window_border_with_wide_char(win, BoldBorderChar);
+		draw_window_border_with_wide_char(win, BoldBorderChar, config.color);
 	};
 	case  BorderStyleRounded => {
-		draw_window_border_with_wide_char(win, RoundedBorderChar);
+		draw_window_border_with_wide_char(win, RoundedBorderChar, config.color);
 	};
 	case  BorderStyleDouble => {
-		draw_window_border_with_wide_char(win, DoubleBorderChar);
+		draw_window_border_with_wide_char(win, DoubleBorderChar, config.color);
 	};
 	case let draw_char:BorderStyleCustomAscii => {
 		wborder(win,
@@ -200,10 +266,9 @@ export fn draw_window_border(win: const nullable *WINDOW, config: const *BoxBord
 			draw_char.bottom_right: chtype);
 	};
 	case let draw_char:BorderStyleCustomUtf8 => {
-		draw_window_border_with_wide_char(win, draw_char);
+		draw_window_border_with_wide_char(win, draw_char, config.color);
 	};
 	};
 
 	wrefresh(win);
 };
-
