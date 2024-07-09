@@ -417,6 +417,19 @@ You can use =box= to draw the default border or use =wboard= to draw a customize
 
 
 
+*** Moving cursor inside window
+
+When calling =mvwprintw= or =wmove= with the given window, the =y,x= you pass int is related to the window itself (not the terminal screen), that said:
+
+(0,0) - left, top
+   \
+   ┌──────────────────────────────────────┐
+   │                                      │
+   └──────────────────────────────────────┘ 
+                                           \
+                                           (0 + win_rect.height, 0 + win_rect.width) - bottom, right
+
+
 ** Working with =Attributes=
 
 Here is the common pattern to apply attributes to printed text:
