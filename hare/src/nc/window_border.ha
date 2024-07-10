@@ -3,6 +3,16 @@ use io;
 use types::c;
 
 //
+// VT100 symbols are stored in extern `acs_map` array and can be accessed by
+// index with an ASCII character.
+//
+// It defined in the `ncurses` source code
+// ./ncurses/llib-lncursesw:chtype acs_map[128];
+// ./ncurses/llib-ltinfo:chtype    acs_map[128];
+//
+export let @symbol("acs_map") acs_map: [128]chtype;
+
+//
 // `chtype` means a unsigned character, e.g.:
 // 	'a'~'z', 'A'~ Z', '0'~'9'
 // 	'*', '?', '>', '<', '=', etc.
@@ -51,14 +61,14 @@ export type WindowBorderStyle = (
 // ASCII range border char
 //
 export type WindowBorderChar = struct {
-	top_left: u8,
-	top: u8,
-	top_right: u8,
-	left: u8,
-	right: u8,
-	bottom_left: u8,
-	bottom: u8,
-	bottom_right: u8,
+	top_left: chtype,
+	top: chtype,
+	top_right: chtype,
+	left: chtype,
+	right: chtype,
+	bottom_left: chtype,
+	bottom: chtype,
+	bottom_right: chtype,
 };
 
 //
@@ -120,11 +130,36 @@ const DoubleBorderChar = WindowBorderWideChar {
 	bottom_right = '╝',
 };
 
+fn draw_window_border_with_char(
+	win: const nullable *WINDOW,
+	draw_char: WindowBorderChar,
+	draw_color: (void | WindowBorderColor)) void = {
+	match (draw_color) {
+		case void => {
+			wborder(win,
+				draw_char.left,
+				draw_char.right,
+				draw_char.top,
+				draw_char.bottom,
+				draw_char.top_left,
+				draw_char.top_right,
+				draw_char.bottom_left,
+				draw_char.bottom_right);
+		};
+		case let color: WindowBorderColor => {
+			wborder(win,
+				draw_char.left | color.left: chtype,
+				draw_char.right | color.right: chtype,
+				draw_char.top | color.top: chtype,
+				draw_char.bottom | color.bottom: chtype,
+				draw_char.top_left | color.top: chtype,
+				draw_char.top_right | color.top: chtype,
+				draw_char.bottom_left | color.bottom: chtype,
+				draw_char.bottom_right | color.bottom: chtype);
+		};
+	};
+};
 
-//
-// `wborder` function only accepts u8 ASCII char, so we must draw the wide char
-// border ourselves.
-//
 fn draw_window_border_with_wide_char(
 	win: const nullable *WINDOW,
 	draw_char: WindowBorderWideChar,
@@ -240,10 +275,21 @@ fn draw_window_border_with_wide_char(
 //
 //
 //
-export fn draw_window_border(win: const nullable *WINDOW, config: const *WindowBorderConfig) void = {
+export fn draw_window_border(
+	win: const nullable *WINDOW,
+	config: const *WindowBorderConfig) void = {
 	match (config.style) {
 	case  BorderStyleRegular => {
-		box(win, 0, 0);
+		draw_window_border_with_char(win, WindowBorderChar {
+			left = acs_map['x': chtype],
+			right = acs_map['x': chtype],
+			top = acs_map['q': chtype],
+			bottom = acs_map['q': chtype],
+			top_left = acs_map['l': chtype],
+			top_right = acs_map['k': chtype],
+			bottom_left = acs_map['m': chtype],
+			bottom_right = acs_map['j': chtype],
+		}, config.color);
 	};
 	case  BorderStyleBold => {
 		draw_window_border_with_wide_char(win, BoldBorderChar, config.color);
@@ -255,15 +301,7 @@ export fn draw_window_border(win: const nullable *WINDOW, config: const *WindowB
 		draw_window_border_with_wide_char(win, DoubleBorderChar, config.color);
 	};
 	case let draw_char:BorderStyleCustomAscii => {
-		wborder(win,
-			draw_char.left: chtype,
-			draw_char.right: chtype,
-			draw_char.top: chtype,
-			draw_char.bottom: chtype,
-			draw_char.top_left: chtype,
-			draw_char.top_right: chtype,
-			draw_char.bottom_left: chtype,
-			draw_char.bottom_right: chtype);
+		draw_window_border_with_char(win, draw_char, config.color);
 	};
 	case let draw_char:BorderStyleCustomUtf8 => {
 		draw_window_border_with_wide_char(win, draw_char, config.color);

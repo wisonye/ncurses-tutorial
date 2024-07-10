@@ -3,10 +3,6 @@ use nc;
 use types::c;
 use encoding::utf8;
 
-def COLOR_PAIR_SIZE: size = 10;
-def CUSTOMIZE_COLOR_START_INDEX: size = 9;
-def CUSTOMIZE_COLOR_PAIR_START_INDEX: size = 1;
-
 export fn main() int = {
 	//
 	// Enable UTF8 support
@@ -102,6 +98,43 @@ export fn main() int = {
 	win_top += win_height + y_padding;
 	defer nc::delwin(custom_ascii_border_window.win);
 
+	const ascii_top_border_color_pair = 1u16;
+	const ascii_bottom_border_color_pair = 2u16;
+	const ascii_left_border_color_pair = 3u16;
+	const ascii_right_border_color_pair = 4u16;
+	nc::init_pair(ascii_top_border_color_pair, nc::COLOR_RED, nc::COLOR_BLACK);
+	nc::init_pair(ascii_bottom_border_color_pair, nc::COLOR_YELLOW, nc::COLOR_BLACK);
+	nc::init_pair(ascii_left_border_color_pair, nc::COLOR_GREEN, nc::COLOR_BLACK);
+	nc::init_pair(ascii_right_border_color_pair, nc::COLOR_MAGENTA, nc::COLOR_BLACK);
+	const ascii_top_attr = nc::color_pair(ascii_top_border_color_pair);
+	const ascii_bottom_attr = nc::color_pair(ascii_bottom_border_color_pair);
+	const ascii_left_attr = nc::color_pair(ascii_left_border_color_pair);
+	const ascii_right_attr = nc::color_pair(ascii_right_border_color_pair);
+	const custom_ascii_color_border_window = create_border_window(
+		win_left,
+		win_top,
+		win_width,
+		win_height,
+		nc::WindowBorderConfig {
+			style = nc::BorderStyleCustomAscii {
+				top_left = '*',
+				top = '#',
+				top_right = '>',
+				left = '{',
+				right = '}',
+				bottom_left = '[',
+				bottom = '%',
+				bottom_right = ']',
+			}, color = nc::WindowBorderColor {
+				top = ascii_top_attr,
+				bottom = ascii_bottom_attr,
+				left = ascii_left_attr,
+				right = ascii_right_attr,
+ 			}
+		});
+	win_top += win_height + y_padding;
+	defer nc::delwin(custom_ascii_color_border_window.win);
+
 	const custom_utf8_border_window = create_border_window(
 		win_left,
 		win_top,
@@ -175,10 +208,10 @@ fn create_rainbow_window(
 	height: size) nc::PopupWindow = {
 	const popup = nc::create_popup_window(left, top, width, height, false);
 
-	const top_border_color_pair = 1u16;
-	const bottom_border_color_pair = 2u16;
-	const left_border_color_pair = 3u16;
-	const right_border_color_pair = 4u16;
+	const top_border_color_pair = 10u16;
+	const bottom_border_color_pair = 11u16;
+	const left_border_color_pair = 12u16;
+	const right_border_color_pair = 13u16;
 	nc::init_pair(top_border_color_pair, nc::COLOR_RED, nc::COLOR_BLACK);
 	nc::init_pair(bottom_border_color_pair, nc::COLOR_YELLOW, nc::COLOR_BLACK);
 	nc::init_pair(left_border_color_pair, nc::COLOR_GREEN, nc::COLOR_BLACK);

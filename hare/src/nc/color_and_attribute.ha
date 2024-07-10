@@ -42,7 +42,7 @@ export type Color = u16;
 export type ColorIndex = u16;
 export type ColorPair = u16;
 export type ColorPairIndex = u16;
-export type VideoAttr = u32;
+export type VideoAttr = chtype;
 
 //
 // Check and enable colors

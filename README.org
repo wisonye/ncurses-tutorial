@@ -102,7 +102,7 @@ The =ncurses= package supports:
 All functions without the =w= prefix (e.g. =getch=, =printw=, =refresh()=, etc) are just a wrapped version of with =w= prefix (e.g. =wgetch=, =wprintw=, =wrefresh=, etc) by passing the =stdscr= as the first parameter!!!
 
 
-** Workding with unicode
+** Unicode support
 
 A few steps to support drawing unicode:
 
@@ -150,7 +150,7 @@ Example:
 #+END_SRC
 
 
-** Working with =Window=
+** =Window=
 
 You can run =man curs_window= to get more detailed information
 
@@ -430,7 +430,95 @@ When calling =mvwprintw= or =wmove= with the given window, the =y,x= you pass in
                                            (0 + win_rect.height, 0 + win_rect.width) - bottom, right
 
 
-** Working with =Attributes=
+** =Video Attributes=
+
+*** =chtype= type
+
+Before talking about video attributes, you need to know more deeper about the =chtype=:
+
+=chtype= is the =u32= (not a =u8=), it contains extra info more than a single ASCII char. Let' take a look at the following code:
+
+#+BEGIN_SRC c
+  chtype char_1 = 'A';
+  chtype char_2 = 'A' | COLOR_PAIR(top_border_color_pair);
+  chtype char_3 = 'A' | A_STANDOUT;
+  chtype char_4 = 'A' | A_STANDOUT | COLOR_PAIR(top_border_color_pair);
+
+  printf("\n>>> size of 'chtype': %lu", sizeof(chtype));
+  printf("\n>>> char_1 ascii: %d, Hex: 0x%02X", char_1, char_1);
+  printf("\n>>> char_2 ascii: %d, Hex: 0x%02X", char_2, char_2);
+  printf("\n>>> char_3 ascii: %d, Hex: 0x%02X", char_3, char_3);
+  printf("\n>>> char_4 ascii: %d, Hex: 0x%02X", char_4, char_4);
+  PRINT_BITS(char_1);
+  PRINT_BITS(char_2);
+  PRINT_BITS(char_3);
+  PRINT_BITS(char_4);
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC bash
+  >>> size of 'chtype': 4
+  >>> char_1 ascii: 65, Hex: 0x41
+  >>> char_2 ascii: 321, Hex: 0x141
+  >>> char_3 ascii: 65601, Hex: 0x10041
+  >>> char_4 ascii: 65857, Hex: 0x10141
+  >>> [ PRINT_BITS ] - 0x41 bits:    0000000000000000 00000000 01000001
+  >>> [ PRINT_BITS ] - 0x141 bits:   0000000000000000 00000001 01000001
+  >>> [ PRINT_BITS ] - 0x10041 bits: 0000000000000001 00000000 01000001
+  >>> [ PRINT_BITS ] - 0x10141 bits: 0000000000000001 00000001 01000001⏎
+#+END_SRC
+
+As you can see the result above:
+
+=cha_1= only contains the ASCII (=0x41=) in the 1nd 8 bits (=01000001=).
+=cha_2= contains the ASCII (=0x41=) in the 1nd 8 bits (=01000001=), and the color value in the 2nd 8bits(=00000001=).
+=cha_3= contains the ASCII (=0x41=) in the 1nd 8 bits (=01000001=), and the attr value in the 3nd 16bits(=0000000000000001=).
+=cha_4= contains all of them together.
+
+That's how =chtype= stores rich-info character under the hood.
+
+
+*** Video attributes
+
+Attributes are a property of the character, it affects the graphic rendition of characters put on the screen.
+
+The following video attributes, defined in =<curses.h>=, can be passed to the routines =attron=, =attroff=, and =attrset=, or OR'd with the characters passed to =addch=:
+
+#+BEGIN_SRC bash
+  Name            Description
+  ─────────────────────────────────────────
+  A_NORMAL       Normal display (no highlight)
+  A_STANDOUT     Best highlighting mode of the terminal.
+  A_UNDERLINE    Underlining
+  A_REVERSE      Reverse video
+  A_BLINK        Blinking
+  A_DIM          Half bright
+  A_BOLD         Extra bright or bold
+  A_PROTECT      Protected mode
+  A_INVIS        Invisible or blank mode
+  A_ALTCHARSET   Alternate character set
+  A_ITALIC       Italics (non-X/Open extension)
+  A_CHARTEXT     Bit-mask to extract a character
+  A_COLOR        Bit-mask to extract a color (legacy routines)
+#+END_SRC
+
+
+These video attributes are supported by =attr_on= and related functions (which also support the attributes recognized by =attron=, etc.):
+
+#+BEGIN_SRC bash
+  Name            Description
+  ─────────────────────────────────────────
+  WA_HORIZONTAL   Horizontal highlight
+  WA_LEFT         Left highlight
+  WA_LOW          Low highlight
+  WA_RIGHT        Right highlight
+  WA_TOP          Top highlight
+  WA_VERTICAL     Vertical highlight
+#+END_SRC
+
+
+*** How to apply the attributes
 
 Here is the common pattern to apply attributes to printed text:
 
@@ -439,33 +527,6 @@ Here is the common pattern to apply attributes to printed text:
   wprintw(win, ....)
   wattroff(win, ATTR_HERE);
 #+END_SRC
-
-And here are the supported attributes:
-
-#+BEGIN_SRC c
-  #define A_NORMAL	(1U - 1U)
-  #define A_CHARTEXT	(NCURSES_BITS(1U,0) - 1U)
-  #define A_COLOR		NCURSES_BITS(((1U) << 8) - 1U,0)
-  #define A_STANDOUT	NCURSES_BITS(1U,8)
-  #define A_UNDERLINE	NCURSES_BITS(1U,9)
-  #define A_REVERSE	NCURSES_BITS(1U,10)
-  #define A_BLINK		NCURSES_BITS(1U,11)
-  #define A_DIM		NCURSES_BITS(1U,12)
-  #define A_BOLD		NCURSES_BITS(1U,13)
-  #define A_ALTCHARSET	NCURSES_BITS(1U,14)
-  #define A_INVIS		NCURSES_BITS(1U,15)
-  #define A_PROTECT	NCURSES_BITS(1U,16)
-  #define A_HORIZONTAL	NCURSES_BITS(1U,17)
-  #define A_LEFT		NCURSES_BITS(1U,18)
-  #define A_LOW		NCURSES_BITS(1U,19)
-  #define A_RIGHT		NCURSES_BITS(1U,20)
-  #define A_TOP		NCURSES_BITS(1U,21)
-  #define A_VERTICAL	NCURSES_BITS(1U,22)
-
-  #if 1
-  #define A_ITALIC	NCURSES_BITS(1U,23)	/* ncurses extension */
-#+END_SRC
-
 
 You can =|= a couple of attributes together, here is an example:
 
@@ -476,9 +537,21 @@ You can =|= a couple of attributes together, here is an example:
 #+END_SRC
 
 
+Of course, you're able to apply any attributes to the single =chtype= variable like this:
+
+#+BEGIN_SRC c
+  chtype char_4 = 'A' | A_STANDOUT | COLOR_PAIR(top_border_color_pair);
+#+END_SRC
+
+But keep that in mind, =char_4= only will be printed as colored and styled by calling =addch= (or related variants) but not =printw= (or related variants)!!!
+But keep that in mind, =char_4= only will be printed as colored and styled by calling =addch= (or related variants) but not =printw= (or related variants)!!!
+But keep that in mind, =char_4= only will be printed as colored and styled by calling =addch= (or related variants) but not =printw= (or related variants)!!!
+
+
 *** How to change the applied attributes
 
 After applying the attributes to the printed text, you can change their attributes on the fly by calling
+
 #+BEGIN_SRC c
   wchgat (
       WINDOW *,         // WINDOW *
@@ -505,7 +578,7 @@ After applying the attributes to the printed text, you can change their attribut
 #+END_SRC
 
 
-** Handle user input
+** User input
 
 *** Input options
 
@@ -643,7 +716,7 @@ Full example:
 Those are the special keys with the same HEX value, that's why you can't treat =<TAB>= and =<C-I>= as different keybindings, as they are equal in terminal!!! Same thing with =<C-S-A>= and =<C-A>=.
 
 
-** Working with =Color=
+** =Color=
 
 *** Check terminal color support and start using color
 
@@ -733,7 +806,7 @@ Output:
 That's why you're only allowed to create no longer than =(256 - 8)= custom colours, and your customized colour index should start from =9= (as =0 ~ 8= is used for the predefined colours)!!!
 
 
-****  Example
+**** Example
 
 #+BEGIN_SRC c
   #include <ncurses.h>
@@ -1008,3 +1081,20 @@ Here is the color theme example:
   } 
 #+END_SRC
 
+
+
+** Show and hide cursor
+
+#+BEGIN_SRC hare
+  //
+  // Cursor option
+  //
+  export def CURSOR_INVISIBLE: int = 0;
+  export def CURSOR_NORMAL: int = 1;
+  export def CURSOR_VERY_VISIBLE: int = 2;
+
+  @symbol("curs_set") fn curs_set(int) int;
+  export fn hide_cursor() int = curs_set(CURSOR_INVISIBLE);
+  export fn show_cursor() int = curs_set(CURSOR_NORMAL);
+  export fn show_cursor_2() int = curs_set(CURSOR_VERY_VISIBLE);
+#+END_SRC
