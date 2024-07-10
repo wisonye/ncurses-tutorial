@@ -33,8 +33,8 @@ export fn get_cursor_position(win: const nullable *WINDOW) CursorPosition = {
 //
 // Move cursor related
 //
-@symbol("wmove") fn wmove(win: const nullable *WINDOW, y: int, x: int) int;
-export fn move(win: const nullable *WINDOW,pos: *CursorPosition) int = {
+export @symbol("wmove") fn wmove(win: nullable *WINDOW, y: int, x: int) int;
+export fn set_cursor_position(win: const nullable *WINDOW,pos: *CursorPosition) int = {
 	return wmove(win, pos.y, pos.x);
 };
 

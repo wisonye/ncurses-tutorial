@@ -29,27 +29,11 @@ export let @symbol("curscr") curscr: nullable *WINDOW;
 export let @symbol("newscr") newscr: nullable *WINDOW;
 export let @symbol("stdscr") stdscr: nullable *WINDOW;
 
-
 //
 // Init, create and delete related
 //
 export @symbol("initscr") fn initscr() *WINDOW;
 
-//
-// User input
-//
-export @symbol("addch") fn addch(ch: const chtype) int;
-export @symbol("mvaddch") fn mvaddch(y: int, x: int, ch: const chtype) int;
-
-export @symbol ("wgetch") fn wgetch(win: const nullable *WINDOW) int;
-export @symbol("waddch") fn waddch(
-	win: const nullable *WINDOW,
-	ch: const chtype) int;
-export @symbol("mvwaddch") fn mvwaddch(
-	win: const nullable *WINDOW,
-	y: int,
-	x:int ,
-	ch: const chtype) int;
 
 //
 // Refresh related

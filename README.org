@@ -638,10 +638,10 @@ You got 2 ways to detected whether =Ctrl= is pressed of not:
       //
       // 2. Like this
       //
-              else if (c == ('I' & 0x1F)) {
+      else if (c == ('I' & 0x1F)) {
           wprintw(stdscr, "You pressed: <C-I>, HEX: 0x%.2X\n", c);
       }
-              else {
+      else {
           wprintw(stdscr,
                   "You pressed: %s, HEX: 0x%.2X %s\n",
                   typed_key,
