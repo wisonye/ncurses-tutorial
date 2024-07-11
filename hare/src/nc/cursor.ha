@@ -27,7 +27,7 @@ export fn show_cursor_2() int = curs_set(CURSOR_VERY_VISIBLE);
 
 export type CursorPosition = struct { x: int, y: int };
 export fn get_cursor_position(win: const nullable *WINDOW) CursorPosition = {
-	return CursorPosition { x = getcury(win), y = getcury(win) };
+	return CursorPosition { x = getcurx(win), y = getcury(win) };
 };
 
 //
