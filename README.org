@@ -589,7 +589,19 @@ For more details, read =man curs_inopts=.
 - =cbreak=: User input available to the program immediately no need to wait for a =<CR>=, you see what typed.
 - =nocbreak=: TTY driver buffers the what you typed until you press =<CR>=.
 
+- =nl/nonl=: The =nl= and =nonl= routines control whether the underlying display device translates the return key into newline on input.
+
 - =raw=: Same with =cbreak= except it passes through the typed key uninterpreted, that's why =<C-c>= doesn't terminate your program in =Raw Mode=!!!
+
+- =nodelay=: The nodelay option causes getch to be a non-blocking call.  If no input is ready, getch returns ERR.  If disabled (~bf~ is FALSE), getch waits until a key is pressed.
+
+- =timeout/wtimeout=: The =timeout= and =wtimeout= routines set blocking or non-blocking read for a given window.
+
+  > If ~delay~ is negative, blocking read is used (i.e., waits indefinitely for input).
+  > If ~delay~ is zero, then non-blocking read is used (i.e., read returns ERR if no input is waiting).
+  > If ~delay~ is positive, then read blocks for delay milliseconds, and returns ERR if there is still no input.
+
+  Hence, these routines provide the same functionality as =nodelay=, plus the additional capability of being able to block for only delay milliseconds (where ~delay~ is positive).
 
 - =keypad (WINDOW *,bool);=: Enable number key and arrow key or not, disabled by default.
   You have to enable this if you want to capture the following keys:
