@@ -36,8 +36,9 @@ export @symbol("initscr") fn initscr() *WINDOW;
 
 
 //
-// Refresh related
+// Clear and refresh related
 //
+export @symbol("wclear") fn wclear(win: const nullable *opaque) int;
 export @symbol("wrefresh") fn wrefresh(win: const nullable *opaque) int;
 export fn refresh() int = {
 	return wrefresh(stdscr);

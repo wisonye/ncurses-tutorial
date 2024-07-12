@@ -4,8 +4,8 @@
 export @symbol("newwin") fn newwin(
 	height: int,
 	width: int,
-	left: int,
-	top: int) *WINDOW;
+	top: int,
+	left: int) *WINDOW;
 export @symbol("delwin") fn delwin(win: nullable *WINDOW) int;
 export @symbol("endwin") fn endwin() int;
 
