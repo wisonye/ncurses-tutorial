@@ -49,6 +49,12 @@ export def KEY_PERIOD: int          = 0x2E; // 46, .
 export def KEY_L_ARROW_BRACKET: int = 0x3C; // 60, <
 export def KEY_R_ARROW_BRACKET: int = 0x3E; // 62, >
 
+export def KEY_D: int               = 0x64; // 100, d
+export def KEY_E: int               = 0x65; // 101, e
+export def KEY_F: int               = 0x66; // 102, f
+export def KEY_P: int               = 0x70; // 112, p
+export def KEY_S: int               = 0x73; // 115, s
+
 
 //
 // 0x0D (13)
