@@ -1,19 +1,63 @@
 const std = @import("std");
+const print = std.debug.print;
+const nc = @import("nc/common.zig");
 
 pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+    //
+    // Enable UTF8 support
+    //
+    _ = nc.setlocale(nc.LC_ALL, null);
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+    //
+    // Init screen
+    //
+    _ = nc.initscr();
+    // defer nc.endwin();
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
+    // //
+    // // Check and enable color support
+    // //
+    // if (!nc.has_colors() || !nc.can_change_color()) {
+    //     print("\n>>> Terminal doesn't support colors", .{});
+    //     return -1;
+    // }
+    // nc.start_color();
 
-    try bw.flush(); // don't forget to flush!
+    // //
+    // // Hide cursor
+    // //
+    // nc.hide_cursor();
+
+    // //
+    // // Print tile and exit tips
+    // //
+    // const term_size = nc.get_window_size(nc.stdscr);
+    // nc.mvwprintw(nc.stdscr, 0, 1, @as(
+    //     [*]const u8,
+    //     @ptrCast("[ Window border example ]"),
+    // ));
+    // nc.mvwprintw(
+    //     nc.stdscr,
+    //     term_size.height - 2,
+    //     1,
+    //     @as([*]const u8, @ptrCast("Press any key to exit:)")),
+    // );
+
+    _ = nc.mvwprintw(
+        nc.stdscr,
+        0,
+        1,
+        @as([*]const u8, @ptrCast("[ Window border example ]")),
+    );
+    _ = nc.mvwprintw(
+        nc.stdscr,
+        1,
+        1,
+        "[ Window border example ]",
+    );
+    _ = nc.wrefresh(nc.stdscr);
+
+    return;
 }
 
 test "simple test" {
