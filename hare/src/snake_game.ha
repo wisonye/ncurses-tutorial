@@ -17,7 +17,23 @@ def TOPBAR_HEIGHT: int = 5i;
 def BOARD_HEIGHT: u32 = 30;
 def BOARD_WIDTH: u32 = (BOARD_HEIGHT:f32 * 2.5): u32;
 
+//
+// This is the acutaly game board
+//
 type Board = struct {
+	left: int,
+	top: int,
+	width: int,
+	height: int,
+	win: nullable *nc::WINDOW,
+};
+
+//
+// This is only used for drawing the outside the border of the game board,
+// so it won't be redrawn whenever the game board changes, it solves the
+// refreshing performance issue.
+//
+type BoardBoundary = struct {
 	left: int,
 	top: int,
 	width: int,
@@ -33,6 +49,17 @@ type TopBar = struct {
 	win: nullable *nc::WINDOW,
 };
 
+//
+// Same design purpose with the `BoardBoundary`
+//
+type TopBarBoundary = struct {
+	left: int,
+	top: int,
+	width: int,
+	height: int,
+	win: nullable *nc::WINDOW,
+};
+
 type Game = struct {
 	level: size,
 	score: size,
@@ -41,7 +68,9 @@ type Game = struct {
 	snake: []nc::CursorPosition,
 	food: nc::CursorPosition,
 	board: Board,
+	board_boundary: BoardBoundary,
 	topbar: TopBar,
+	// topbar_boundary: TopBarBoundary,
 };
 
 fn get_random_size(max: u32) size = {
@@ -54,7 +83,34 @@ fn init_game(screen_width: u32, screen_height: u32) Game = {
 	// const board_left = ((screen_width/2) - (BOARD_WIDTH/2)): int;
 	// const board_top = ((screen_height/2) - (BOARD_HEIGHT/2)): int;
 	const topbar_left = 2i, topbar_top = 2i;
-	const board_left = topbar_left, board_top = TOPBAR_HEIGHT + 2i;
+	const board_boundary_left = topbar_left, board_boundary_top = TOPBAR_HEIGHT + 2i;
+	const board_boundary = BoardBoundary {
+		left = board_boundary_left,
+		top = board_boundary_top,
+		width = BOARD_WIDTH:int ,
+		height = BOARD_HEIGHT:int ,
+		win = nc::newwin(
+			BOARD_HEIGHT: int,
+			BOARD_WIDTH: int,
+			board_boundary_top,
+			board_boundary_left),
+	};
+	//
+	// Make the game board smaller by one unit than the `board_boundary`
+	//
+	const board = Board {
+		left = board_boundary_left + 1,
+		top = board_boundary_top + 1,
+		width = BOARD_WIDTH:int - 2,
+		height = BOARD_HEIGHT:int - 2,
+		win = nc::derwin(
+			origin_win: board_boundary.win,
+			BOARD_HEIGHT: int - 2,
+			BOARD_WIDTH: int - 2,
+			board_boundary_top + 1,
+			board_boundary_left + 1),
+	};
+
 	let self = Game {
 		level = 1z,
 		// score = 999z,
@@ -66,17 +122,8 @@ fn init_game(screen_width: u32, screen_height: u32) Game = {
 			x = get_random_size(BOARD_WIDTH - 1): int,
 			y = get_random_size(BOARD_HEIGHT - 1): int,
 		},
-		board = Board {
-			left = board_left,
-			top = board_top,
-			width = BOARD_WIDTH:int ,
-			height = BOARD_HEIGHT:int ,
-			win = nc::newwin(
-				BOARD_HEIGHT: int,
-				BOARD_WIDTH: int,
-				board_top,
-				board_left),
-		},
+		board_boundary = board_boundary,
+		board = board,
 		topbar = TopBar {
 			left = topbar_left,
 			top = topbar_top,
@@ -89,6 +136,7 @@ fn init_game(screen_width: u32, screen_height: u32) Game = {
 				topbar_left),
 		},
 	};
+
 	nc::wrefresh(nc::stdscr);
 
 	//
@@ -114,8 +162,31 @@ fn deinit_game(self: *Game) void = {
 	if (!self.is_destroy) {
 		free(self.snake);
 		nc::delwin(self.board.win);
+		nc::delwin(self.board_boundary.win);
 		nc::delwin(self.topbar.win);
 	};
+};
+
+fn reset_game(self: *Game) void = {
+	self.level = 1z;
+	self.score = 0z;
+	self.is_pause = false;
+	self.is_destroy = false;
+
+	free(self.snake);
+	self.snake = alloc([], 20);
+
+	self.food = nc::CursorPosition {
+		x = get_random_size(BOARD_WIDTH - 1): int,
+		y = get_random_size(BOARD_HEIGHT - 1): int,
+	};
+
+	draw_board_boundary(self);
+};
+
+fn draw_board_boundary(self: *Game) void = {
+	nc::box(self.board_boundary.win, 0, 0);
+	nc::wrefresh(self.board_boundary.win);
 };
 
 fn draw_topbar(self: *const Game) void = {
@@ -164,16 +235,11 @@ fn draw_topbar(self: *const Game) void = {
 		c::nulstr("%10s\0"),
 		c::nulstr(score_msg));
 
-	nc::wrefresh(self.topbar.win);
+	nc::wnoutrefresh(self.topbar.win);
 };
 
 fn draw(self: *const Game) void = {
 	nc::wclear(self.board.win);
-
-	//
-	// Boarder
-	//
-	nc::box(self.board.win, 0, 0);
 
 	//
 	// Top bar
@@ -234,7 +300,14 @@ fn draw(self: *const Game) void = {
 			else SNAKE_BODY_CHAR);
 	};
 
-	nc::wrefresh(self.board.win);
+	nc::wnoutrefresh(self.board.win);
+
+	//
+	// After multiple `wnoutrefresh(win)` on different named windows, call the
+	// `doupdate()` to push the virtual screen changes to the physical
+	// screen in one shot.
+	//
+	nc::doupdate();
 };
 
 //
@@ -292,6 +365,7 @@ export fn main() int = {
 	const game = init_game(term_size.width: u32, term_size.height: u32);
 	defer deinit_game(&game);
 
+	draw_board_boundary(&game);
 	draw(&game);
 
 	//
@@ -303,27 +377,19 @@ export fn main() int = {
 			case 'Q' => break;
 			// Up
 			case nc::KEY_E => {
-				nc::mvwprintw(nc::stdscr,
-					2, 2,
-					c::nulstr("Direction: Up\0"));
+				game.snake[0].y -= 1;
 			};
 			// Down
 			case nc::KEY_D => {
-				nc::mvwprintw(nc::stdscr,
-					2, 2,
-					c::nulstr("Direction: Down\0"));
+				game.snake[0].y += 1;
 			};
 			// Left
 			case nc::KEY_S => {
-				nc::mvwprintw(nc::stdscr,
-					2, 2,
-					c::nulstr("Direction: Left\0"));
+				game.snake[0].x -= 1;
 			};
 			// Right
 			case nc::KEY_F => {
-				nc::mvwprintw(nc::stdscr,
-					2, 2,
-					c::nulstr("Direction: Right\0"));
+				game.snake[0].x += 1;
 			};
 			case => void;
 

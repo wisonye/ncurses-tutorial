@@ -6,6 +6,12 @@ export @symbol("newwin") fn newwin(
 	width: int,
 	top: int,
 	left: int) *WINDOW;
+export @symbol("derwin") fn derwin(
+	origin_win: nullable *WINDOW,
+	nlines: int,
+	ncols: int,
+	begin_y: int,
+	begin_x: int) *WINDOW;
 export @symbol("delwin") fn delwin(win: nullable *WINDOW) int;
 export @symbol("endwin") fn endwin() int;
 

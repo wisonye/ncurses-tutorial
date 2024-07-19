@@ -44,6 +44,9 @@ export fn refresh() int = {
 	return wrefresh(stdscr);
 };
 
+export @symbol("wnoutrefresh") fn wnoutrefresh(win: const nullable *opaque) int;
+export @symbol("doupdate") fn doupdate() int;
+
 //
 // Print in window related
 //
