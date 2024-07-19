@@ -3,3 +3,5 @@ c/.cache
 c/temp_build
 c/clangd.core
 hare/out
+zig/zig-out
+zig/.zig-cache
