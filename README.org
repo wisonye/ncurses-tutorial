@@ -31,7 +31,27 @@ Make sure to link to the =ncursesw= (wide character supported) library!!!
 
 #+BEGIN_SRC bash
   cd hare
-  hare run -lncursesw src/XXX.ha
+  ./run.sh src/window_border_example.ha
+  ./run.sh src/typing_example.ha
+#+END_SRC
+
+
+** Zig version
+
+*** How to run
+
+#+BEGIN_SRC bash
+  #
+  # Print out supported demo run steps
+  #
+  zig build --help | rg "run-"
+  #  run-typing-example           Run typing-example
+  #  run-window-border-example    Run window-border-example
+
+  #
+  # Then pick one you like to run ti
+  #
+  zig build run-window-border-example
 #+END_SRC
 
 
