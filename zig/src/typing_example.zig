@@ -1,4 +1,5 @@
 const std = @import("std");
+const print = std.debug.print;
 const nc = @import("nc.zig");
 
 const ENABLE_KEY_DEBUG_MODE: bool = true;
@@ -26,7 +27,7 @@ pub fn main() void {
     //
     // Enable UTF8 support
     //
-    _ = nc.setlocale(nc.LC_ALL, null);
+    _ = nc.setlocale(nc.LC_ALL, "en_US.UTF-8");
 
     //
     // Init screen
@@ -34,19 +35,19 @@ pub fn main() void {
     _ = nc.initscr();
     defer _ = nc.endwin();
 
-    // //
-    // // Check and enable color support
-    // //
-    // if (!nc.has_colors() || !nc.can_change_color()) {
-    // 	fmt::printfln(">>> Terminal doesn't support colors")!;
-    // 	return -1;
-    // };
-    // nc.start_color();
+    //
+    // Check and enable color support
+    //
+    if (!nc.has_colors() or !nc.can_change_color()) {
+        print(">>> Terminal doesn't support colors", .{});
+        return;
+    }
+    _ = nc.start_color();
 
     //
     // Hide cursor
     //
-    // nc.hide_cursor();
+    _ = nc.hide_cursor();
 
     //
     // Input options
@@ -65,7 +66,7 @@ pub fn main() void {
     defer _ = nc.delwin(typing_window);
     _ = nc.wrefresh(nc.stdscr);
 
-    // _ = nc.box(typing_window, 0, 0);
+    _ = nc.box(typing_window, 0, 0);
 
     const start_col = 2;
     var row: c_int = 0;
@@ -97,7 +98,7 @@ pub fn main() void {
 
     _ = nc.wrefresh(nc.stdscr);
 
-    // _ = nc.box(status_window, 0, 0);
+    _ = nc.box(status_window, 0, 0);
 
     var pos = nc.get_cursor_position(typing_window);
     _ = update_cursor_position(status_window, pos.y, pos.x);

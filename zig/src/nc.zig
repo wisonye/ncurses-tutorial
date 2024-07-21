@@ -488,7 +488,11 @@ const DoubleBorderChar = WindowBorderWideChar{
     .bottom_right = '╝',
 };
 
-fn draw_window_border_with_char(win: ?*WINDOW, draw_char: WindowBorderChar, draw_color: ?WindowBorderColor) void {
+fn draw_window_border_with_char(
+    win: ?*WINDOW,
+    draw_char: WindowBorderChar,
+    draw_color: ?WindowBorderColor,
+) void {
     if (draw_color) |color| {
         _ = wborder(
             win,
@@ -516,7 +520,11 @@ fn draw_window_border_with_char(win: ?*WINDOW, draw_char: WindowBorderChar, draw
     }
 }
 
-fn draw_window_border_with_wide_char(win: ?*WINDOW, draw_char: WindowBorderWideChar, draw_color: ?WindowBorderColor) void {
+fn draw_window_border_with_wide_char(
+    win: ?*WINDOW,
+    draw_char: WindowBorderWideChar,
+    draw_color: ?WindowBorderColor,
+) void {
     const rect = get_window_rect(win);
 
     //

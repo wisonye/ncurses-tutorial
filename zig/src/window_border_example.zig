@@ -6,7 +6,7 @@ pub fn main() void {
     //
     // Enable UTF8 support
     //
-    _ = nc.setlocale(nc.LC_ALL, null);
+    _ = nc.setlocale(nc.LC_ALL, "en_US.UTF-8");
 
     //
     // Init screen

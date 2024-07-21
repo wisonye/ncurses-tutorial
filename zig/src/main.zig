@@ -6,54 +6,44 @@ pub fn main() !void {
     //
     // Enable UTF8 support
     //
-    _ = nc.setlocale(nc.LC_ALL, null);
+    const result = nc.setlocale(nc.LC_ALL, "en_US.UTF-8");
 
     //
     // Init screen
     //
     _ = nc.initscr();
-    // defer nc.endwin();
+    defer _ = nc.endwin();
 
-    // //
-    // // Check and enable color support
-    // //
-    // if (!nc.has_colors() || !nc.can_change_color()) {
-    //     print("\n>>> Terminal doesn't support colors", .{});
-    //     return -1;
-    // }
-    // nc.start_color();
+    //
+    // Check and enable color support
+    //
+    if (!nc.has_colors() or !nc.can_change_color()) {
+        print("\n>>> Terminal doesn't support colors", .{});
+        return;
+    }
+    _ = nc.start_color();
 
     //
     // Hide cursor
     //
     _ = nc.hide_cursor();
 
-    // //
-    // // Print tile and exit tips
-    // //
-    // const term_size = nc.get_window_size(nc.stdscr);
-    // nc.mvwprintw(nc.stdscr, 0, 1, @as(
-    //     [*]const u8,
-    //     @ptrCast("[ Window border example ]"),
-    // ));
-    // nc.mvwprintw(
-    //     nc.stdscr,
-    //     term_size.height - 2,
-    //     1,
-    //     @as([*]const u8, @ptrCast("Press any key to exit:)")),
-    // );
-
+    //
+    // Print something
+    //
     _ = nc.mvwprintw(
         nc.stdscr,
-        0,
         1,
-        @as([*]const u8, @ptrCast("[ Window border example ]")),
+        0,
+        "[ UTF8 test ]\n>>> setlocale result: %s",
+        result,
     );
     _ = nc.mvwprintw(
         nc.stdscr,
-        1,
-        1,
-        "[ Window border example ]",
+        3,
+        0,
+        ">>> UTF8 icons: %s",
+        "⚡          ",
     );
     _ = nc.wrefresh(nc.stdscr);
 

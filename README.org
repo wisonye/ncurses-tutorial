@@ -49,7 +49,7 @@ Make sure to link to the =ncursesw= (wide character supported) library!!!
   #  run-window-border-example    Run window-border-example
 
   #
-  # Then pick one you like to run ti
+  # Then pick one you like to run it
   #
   zig build run-window-border-example
 #+END_SRC
@@ -167,6 +167,20 @@ Example:
 
       return 0;
   }
+#+END_SRC
+
+
+*** =setlocale= for =zig=
+
+Depends on different =lib= implementations you're using, =setlocale= will check the environment variable =LC_ALL= is inspected, next the environment variable with the same name as the category, and finally the environment variable =LANG=. The first existing environment variable is used.  If its value is not a valid locale specification, the locale is unchanged, and =setlocale()= returns =NULL=.
+
+Becuase =zig= compile its =libc= on the fly, =setlocale= returns =C= (The locale =C= or =POSIX= is a portable locale; it exists on all conforming systems), it causes the UTF8 icon can't be drawn, you have to set =LC_ALL= to =en_US.UTF-8= like this to make it work:
+
+#+BEGIN_SRC zig
+  //
+  // Enable UTF8 support
+  //
+  _ = nc.setlocale(nc.LC_ALL, "en_US.UTF-8");
 #+END_SRC
 
 
