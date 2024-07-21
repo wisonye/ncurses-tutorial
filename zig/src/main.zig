@@ -1,6 +1,6 @@
 const std = @import("std");
 const print = std.debug.print;
-const nc = @import("nc/common.zig");
+const nc = @import("nc.zig");
 
 pub fn main() !void {
     //
@@ -23,10 +23,10 @@ pub fn main() !void {
     // }
     // nc.start_color();
 
-    // //
-    // // Hide cursor
-    // //
-    // nc.hide_cursor();
+    //
+    // Hide cursor
+    //
+    _ = nc.hide_cursor();
 
     // //
     // // Print tile and exit tips
@@ -56,6 +56,8 @@ pub fn main() !void {
         "[ Window border example ]",
     );
     _ = nc.wrefresh(nc.stdscr);
+
+    _ = nc.wgetch(nc.stdscr);
 
     return;
 }
