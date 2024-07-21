@@ -297,6 +297,406 @@ pub fn get_window_rect(win: ?*const WINDOW) WindowRect {
 }
 
 // ----------------------------------------------------------------------------
+// Color and attributes
+// ----------------------------------------------------------------------------
+pub const NCURSES_ATTR_SHIFT: u32 = 8;
+
+//
+// Preconstined attributes
+//
+pub const A_COLOR: u32 = 65280;
+pub const A_ATTRIBUTES: u32 = 4294967040;
+pub const A_NORMAL: u32 = 0;
+pub const A_STANDOUT: u32 = 65536;
+pub const A_UNDERLINE: u32 = 131072;
+pub const A_REVERSE: u32 = 262144;
+pub const A_BLINK: u32 = 524288;
+pub const A_DIM: u32 = 1048576;
+pub const A_BOLD: u32 = 2097152;
+pub const A_ALTCHARSET: u32 = 4194304;
+pub const A_INVIS: u32 = 8388608;
+pub const A_PROTECT: u32 = 16777216;
+pub const A_HORIZONTAL: u32 = 33554432;
+pub const A_LEFT: u32 = 67108864;
+pub const A_LOW: u32 = 134217728;
+pub const A_RIGHT: u32 = 268435456;
+pub const A_TOP: u32 = 536870912;
+pub const A_VERTICAL: u32 = 1073741824;
+pub const A_ITALIC: u32 = 2147483648;
+
+//
+// Preconstined colors
+//
+pub const COLOR_BLACK: u16 = 0;
+pub const COLOR_RED: u16 = 1;
+pub const COLOR_GREEN: u16 = 2;
+pub const COLOR_YELLOW: u16 = 3;
+pub const COLOR_BLUE: u16 = 4;
+pub const COLOR_MAGENTA: u16 = 5;
+pub const COLOR_CYAN: u16 = 6;
+pub const COLOR_WHITE: u16 = 7;
+
+//
+// Preconstined types
+//
+pub const Color = u16;
+pub const ColorIndex = u16;
+pub const ColorPair = u16;
+pub const ColorPairIndex = u16;
+pub const VideoAttr = chtype;
+
+//
+// Check and enable colors
+//
+pub extern fn has_colors() bool;
+pub extern fn can_change_color() bool;
+pub extern fn start_color() c_int;
+
+//
+// constine and use color and color pairs (foregroud <-> background)
+//
+pub extern fn init_color(index: ColorIndex, r: Color, g: Color, b: Color) c_int;
+
+pub extern fn init_pair(index: ColorPairIndex, foreground_color_index: ColorIndex, background_color_index: ColorIndex) c_int;
+
+pub fn color_pair(index: ColorPairIndex) VideoAttr {
+    return ((index << (0 + NCURSES_ATTR_SHIFT)) & A_COLOR);
+}
+
+//
+// Enable or disable (video) attributes
+//
+pub extern fn wattr_on(win: ?*WINDOW, attr: VideoAttr, _: ?*anyopaque) c_int;
+pub extern fn wattr_off(win: ?*WINDOW, attr: VideoAttr, _: ?*anyopaque) c_int;
+
+// ----------------------------------------------------------------------------
+// Window border
+// ----------------------------------------------------------------------------
+
+//
+// VT100 symbols are stored in extern `acs_map` array and can be accessed by
+// index with an ASCII character.
+//
+// It constined in the `ncurses` source code
+// ./ncurses/llib-lncursesw:chtype acs_map[128];
+// ./ncurses/llib-ltinfo:chtype    acs_map[128];
+//
+pub extern const acs_map: [128]chtype;
+
+//
+// `chtype` means a unsigned character, e.g.:
+// 	'a'~'z', 'A'~ Z', '0'~'9'
+// 	'*', '?', '>', '<', '=', etc.
+//
+// 	'0' means use the constault charater to fill the border!!!
+//
+pub extern fn wborder(win: ?*WINDOW, left: chtype, right: chtype, top: chtype, bottom: chtype, top_left_corner: chtype, top_right_corner: chtype, bottom_left_corner: chtype, bottom_right_corner: chtype) c_int;
+
+pub fn box(win: ?*WINDOW, left_right: chtype, top_bottom: chtype) c_int {
+    return wborder(
+        win,
+        top_bottom,
+        top_bottom,
+        left_right,
+        left_right,
+        0,
+        0,
+        0,
+        0,
+    );
+}
+
+//
+// ASCII range border char
+//
+pub const WindowBorderChar = struct {
+    top_left: chtype,
+    top: chtype,
+    top_right: chtype,
+    left: chtype,
+    right: chtype,
+    bottom_left: chtype,
+    bottom: chtype,
+    bottom_right: chtype,
+};
+
+//
+// UTF8 range border char
+//
+pub const WindowBorderWideChar = struct {
+    top_left: chtype,
+    top: chtype,
+    top_right: chtype,
+    left: chtype,
+    right: chtype,
+    bottom_left: chtype,
+    bottom: chtype,
+    bottom_right: chtype,
+};
+
+pub const WindowBorderColor = struct {
+    top: VideoAttr,
+    bottom: VideoAttr,
+    left: VideoAttr,
+    right: VideoAttr,
+};
+
+pub const WindowBorderStyle = union(enum) {
+    BorderStyleRegular: void,
+    BorderStyleBold: void,
+    BorderStyleRounded: void,
+    BorderStyleDouble: void,
+    BorderStyleCustomAscii: WindowBorderChar,
+    BorderStyleCustomUtf8: WindowBorderWideChar,
+};
+
+pub const WindowBorderConfig = struct {
+    style: WindowBorderStyle,
+    color: ?WindowBorderColor,
+};
+
+const BoldBorderChar = WindowBorderWideChar{
+    .top_left = '┏',
+    .top = '━',
+    .top_right = '┓',
+    .left = '┃',
+    .right = '┃',
+    .bottom_left = '┗',
+    .bottom = '━',
+    .bottom_right = '┛',
+};
+
+const RoundedBorderChar = WindowBorderWideChar{
+    .top_left = '╭',
+    .top = '─',
+    .top_right = '╮',
+    .left = '│',
+    .right = '│',
+    .bottom_left = '╰',
+    .bottom = '─',
+    .bottom_right = '╯',
+};
+
+const DoubleBorderChar = WindowBorderWideChar{
+    .top_left = '╔',
+    .top = '═',
+    .top_right = '╗',
+    .left = '║',
+    .right = '║',
+    .bottom_left = '╚',
+    .bottom = '═',
+    .bottom_right = '╝',
+};
+
+fn draw_window_border_with_char(win: ?*WINDOW, draw_char: WindowBorderChar, draw_color: ?WindowBorderColor) void {
+    if (draw_color) |color| {
+        _ = wborder(
+            win,
+            @as(chtype, draw_char.left | color.left),
+            @as(chtype, draw_char.right | color.right),
+            @as(chtype, draw_char.top | color.top),
+            @as(chtype, draw_char.bottom | color.bottom),
+            @as(chtype, draw_char.top_left | color.top),
+            @as(chtype, draw_char.top_right | color.top),
+            @as(chtype, draw_char.bottom_left | color.bottom),
+            @as(chtype, draw_char.bottom_right | color.bottom),
+        );
+    } else {
+        _ = wborder(
+            win,
+            draw_char.left,
+            draw_char.right,
+            draw_char.top,
+            draw_char.bottom,
+            draw_char.top_left,
+            draw_char.top_right,
+            draw_char.bottom_left,
+            draw_char.bottom_right,
+        );
+    }
+}
+
+fn draw_window_border_with_wide_char(win: ?*WINDOW, draw_char: WindowBorderWideChar, draw_color: ?WindowBorderColor) void {
+    const rect = get_window_rect(win);
+
+    //
+    // Top left
+    //
+    if (draw_color) |color| {
+        _ = wattr_on(win, color.top, null);
+        _ = mvwprintw(win, 0, 0, "%lc", draw_char.top_left);
+        _ = wattr_off(win, color.top, null);
+    } else {
+        _ = mvwprintw(win, 0, 0, "%lc", draw_char.top_left);
+    }
+
+    //
+    // Top
+    //
+    var draw_len: usize = @as(usize, @intCast(rect.width)) - 1;
+    for (1..draw_len) |_| {
+        if (draw_color) |color| {
+            _ = wattr_on(win, color.top, null);
+            _ = wprintw(win, "%lc", draw_char.top);
+            _ = wattr_off(win, color.top, null);
+        } else {
+            _ = wprintw(win, "%lc", draw_char.top);
+        }
+    }
+
+    //
+    // Top right
+    //
+    if (draw_color) |color| {
+        _ = wattr_on(win, color.top, null);
+        _ = wprintw(win, "%lc", draw_char.top_right);
+        _ = wattr_off(win, color.top, null);
+    } else {
+        _ = wprintw(win, "%lc", draw_char.top_right);
+    }
+
+    //
+    // Left & right
+    //
+    const draw_count: usize = @as(usize, @intCast(rect.height)) - 1;
+    for (1..draw_count) |index| {
+        if (draw_color) |color| {
+            _ = wattr_on(win, color.left, null);
+            _ = mvwprintw(win, @as(c_int, @intCast(index)), 0, "%lc", draw_char.left);
+            _ = wattr_off(win, color.left, null);
+
+            _ = wattr_on(win, color.right, null);
+            _ = mvwprintw(
+                win,
+                @as(c_int, @intCast(index)),
+                rect.width - 1,
+                "%lc",
+                draw_char.right,
+            );
+            _ = wattr_off(win, color.right, null);
+        } else {
+            _ = mvwprintw(win, @as(c_int, @intCast(index)), 0, "%lc", draw_char.left);
+            _ = mvwprintw(
+                win,
+                @as(c_int, @intCast(index)),
+                rect.width - 1,
+                "%lc",
+                draw_char.right,
+            );
+        }
+    }
+
+    //
+    // Bottom left
+    //
+    if (draw_color) |color| {
+        _ = wattr_on(win, color.bottom, null);
+        _ = mvwprintw(win, rect.height - 1, 0, "%lc", draw_char.bottom_left);
+        _ = wattr_off(win, color.bottom, null);
+    } else {
+        _ = mvwprintw(win, rect.height - 1, 0, "%lc", draw_char.bottom_left);
+    }
+
+    //
+    // bottom
+    //
+    //
+    draw_len = @as(usize, @intCast(rect.width)) - 1;
+    for (1..draw_len) |_| {
+        if (draw_color) |color| {
+            _ = wattr_on(win, color.bottom, null);
+            _ = wprintw(win, "%lc", draw_char.bottom);
+            _ = wattr_off(win, color.bottom, null);
+        } else {
+            _ = wprintw(win, "%lc", draw_char.bottom);
+        }
+    }
+
+    //
+    // Bottom right
+    //
+    if (draw_color) |color| {
+        _ = wattr_on(win, color.bottom, null);
+        _ = wprintw(win, "%lc", draw_char.bottom_right);
+        _ = wattr_off(win, color.bottom, null);
+    } else {
+        _ = wprintw(win, "%lc", draw_char.bottom_right);
+    }
+}
+
+//
+//
+//
+pub fn draw_window_border(win: ?*WINDOW, config: *const WindowBorderConfig) void {
+    switch (config.style) {
+        .BorderStyleRegular => {
+            draw_window_border_with_char(win, WindowBorderChar{
+                .left = acs_map[@as(chtype, 'x')],
+                .right = acs_map[@as(chtype, 'x')],
+                .top = acs_map[@as(chtype, 'q')],
+                .bottom = acs_map[@as(chtype, 'q')],
+                .top_left = acs_map[@as(chtype, 'l')],
+                .top_right = acs_map[@as(chtype, 'k')],
+                .bottom_left = acs_map[@as(chtype, 'm')],
+                .bottom_right = acs_map[@as(chtype, 'j')],
+            }, config.color);
+        },
+        .BorderStyleBold => {
+            draw_window_border_with_wide_char(win, BoldBorderChar, config.color);
+        },
+        .BorderStyleRounded => {
+            draw_window_border_with_wide_char(win, RoundedBorderChar, config.color);
+        },
+        .BorderStyleDouble => {
+            draw_window_border_with_wide_char(win, DoubleBorderChar, config.color);
+        },
+        .BorderStyleCustomAscii => |draw_char| {
+            draw_window_border_with_char(win, draw_char, config.color);
+        },
+        .BorderStyleCustomUtf8 => |draw_char| {
+            draw_window_border_with_wide_char(win, draw_char, config.color);
+        },
+    }
+
+    _ = wrefresh(win);
+}
+
+// ----------------------------------------------------------------------------
+// Popup menu
+// ----------------------------------------------------------------------------
+
+//
+// Popup window
+//
+pub const PopupWindow = struct {
+    win: ?*WINDOW,
+    left: c_int,
+    top: c_int,
+    width: c_int,
+    height: c_int,
+};
+
+pub fn create_popup_window(left: c_int, top: c_int, width: c_int, height: c_int, with_default_border: bool) PopupWindow {
+    var w = PopupWindow{
+        .left = left,
+        .top = top,
+        .width = width,
+        .height = height,
+        .win = null,
+    };
+    w.win = newwin(w.height, w.width, w.top, w.left);
+    _ = wrefresh(stdscr);
+
+    // Draw a box with default border to the given window (area)
+    if (with_default_border) {
+        _ = box(w.win, 0, 0);
+        _ = wrefresh(w.win);
+    }
+
+    return w;
+}
+
+// ----------------------------------------------------------------------------
 // Popup menu
 // ----------------------------------------------------------------------------
 
@@ -322,14 +722,14 @@ pub fn get_window_rect(win: ?*const WINDOW) WindowRect {
 //     on_item_click: OnMenuItemClick,
 // };
 //
-// export fn init_popup_menu(
+// pub fn init_popup_menu(
 //     left: usize,
 //     top: usize,
 //     width: usize,
 //     height: usize,
 //     items: [*]PopupMenuItem,
 //     on_item_click: OnMenuItemClick,
-//     with_default_border: bool,
+//     with_constault_border: bool,
 // ) callconv(.C) PopupMenu {
 //     var self = PopupMenu{
 //         .left = left,
@@ -353,8 +753,8 @@ pub fn get_window_rect(win: ?*const WINDOW) WindowRect {
 //     self.win = newwin(self.height, self.width, self.top, self.left);
 //     wrefresh(stdscr);
 //
-//     // Draw a box with default border to the given window (area)
-//     if (with_default_border) {
+//     // Draw a box with constault border to the given window (area)
+//     if (with_constault_border) {
 //         // box(self.win, 0, 0);
 //         wrefresh(self.win);
 //     }
@@ -362,7 +762,7 @@ pub fn get_window_rect(win: ?*const WINDOW) WindowRect {
 //     return self;
 // }
 //
-// export fn deinit_popup_menu(self: *PopupMenu) void {
+// pub fn deinit_popup_menu(self: *PopupMenu) void {
 //     if (self.win != null) {
 //         _ = delwin(self.win);
 //         self.win = null;

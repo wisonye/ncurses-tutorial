@@ -92,4 +92,12 @@ pub fn build(b: *std.Build) void {
         "typing-example",
         "src/typing_example.zig",
     );
+
+    _ = utils.create_ncurses_example_binary(
+        b,
+        target,
+        optimize,
+        "window-border-example",
+        "src/window_border_example.zig",
+    );
 }
