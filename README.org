@@ -63,6 +63,12 @@ Make sure to link to the =ncursesw= (wide character supported) library!!!
   </a>
 #+END_SRC
 
+#+BEGIN_HTML
+  <a href="https://github.com/wisonye/ncurses-tutorial/blob/master/example_screenshots/hare-window-border-example.png">
+  <img src="example_screenshots/hare-window-border-example.png" />
+  </a>
+#+END_HTML
+
 
 ** What is =ncurses=
 
