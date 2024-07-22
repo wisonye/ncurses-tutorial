@@ -34,11 +34,11 @@ export fn main() int = {
 	//
 	// Check and enable color support
 	//
-    if (!nc.has_colors() or !nc.can_change_color()) {
-        print(">>> Terminal doesn't support colors", .{});
-        return;
-    }
-    _ = nc.start_color();
+	if (!nc::has_colors() || !nc::can_change_color()) {
+		fmt::printfln(">>> Terminal doesn't support colors")!;
+		return -1;
+	};
+	nc::start_color();
 
 	//
 	// Hide cursor
