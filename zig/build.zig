@@ -100,4 +100,12 @@ pub fn build(b: *std.Build) void {
         "window-border-example",
         "src/window_border_example.zig",
     );
+
+    _ = utils.create_ncurses_example_binary(
+        b,
+        target,
+        optimize,
+        "snake-game",
+        "src/snake_game.zig",
+    );
 }
