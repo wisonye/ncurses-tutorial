@@ -2,12 +2,14 @@ const std = @import("std");
 const nc = @import("nc.zig");
 const time = std.time;
 
-// const ENABLE_DEBUG_PRINT: bool = true;
 const ENABLE_DEBUG_PRINT: bool = false;
 
 const FOOD_CHAR: nc.chtype = '󱗾';
 const SNAKE_HEAD_CHAR: nc.chtype = '';
 const SNAKE_BODY_CHAR: nc.chtype = '';
+// const FOOD_CHAR: nc.chtype = 'F';
+// const SNAKE_HEAD_CHAR: nc.chtype = 'H';
+// const SNAKE_BODY_CHAR: nc.chtype = 'B';
 
 const GAME_TITLE: []const u8 = "[ SNAKE GAME ]";
 const GAME_KEYBINDINDS: []const u8 = "E/D/S/F: Direction, P: Pause/Resume, Q: Exit game";
@@ -112,8 +114,14 @@ const Game = struct {
             .top = board_boundary_top + 1,
             .width = @as(c_int, @intCast(BOARD_WIDTH)) - 2,
             .height = @as(c_int, @intCast(BOARD_HEIGHT)) - 2,
-            .win = nc.derwin(
-                board_boundary.win,
+            // .win = nc.derwin(
+            //     board_boundary.win,
+            //     @as(c_int, @intCast(BOARD_HEIGHT)) - 2,
+            //     @as(c_int, @intCast(BOARD_WIDTH)) - 2,
+            //     board_boundary_top + 1,
+            //     board_boundary_left + 1,
+            // ),
+            .win = nc.newwin(
                 @as(c_int, @intCast(BOARD_HEIGHT)) - 2,
                 @as(c_int, @intCast(BOARD_WIDTH)) - 2,
                 board_boundary_top + 1,
@@ -289,10 +297,80 @@ const Game = struct {
     fn draw(self: *const Game) void {
         _ = nc.wclear(self.board.win);
 
+        // --TODO: Deubg info should print to bottom window (under
+        //         the border window)!!!
+        // //
+        // // Debug print
+        // //
+        // if (ENABLE_DEBUG_PRINT) {
+        //     var row: c_int = 1;
+        //     const start_col = 1;
+        //     _ = nc.mvwprintw(
+        //         nc.stdscr,
+        //         row,
+        //         start_col,
+        //         ">>> board left: %d, top: %d, width: %d, height: %d",
+        //         self.board.left,
+        //         self.board.top,
+        //         self.board.width,
+        //         self.board.height,
+        //     );
+        //     row += 1;
+        //     _ = nc.mvwprintw(
+        //         nc.stdscr,
+        //         row,
+        //         start_col,
+        //         ">>> Food: (%d, %d)\n",
+        //         self.food.x,
+        //         self.food.y,
+        //     );
+        //     row += 1;
+        //     _ = nc.mvwprintw(
+        //         nc.stdscr,
+        //         row,
+        //         start_col,
+        //         ">>> Snake head: (%d, %d)\n",
+        //         self.snake.items[0].x,
+        //         self.snake.items[0].y,
+        //     );
+        //
+        //     _ = nc.wrefresh(nc.stdscr);
+        // }
+
         //
         // Top bar
         //
         draw_topbar(self);
+
+        //
+        // Food
+        //
+        _ = nc.mvwprintw(
+            self.board.win,
+            self.food.y,
+            self.food.x,
+            "%lc",
+            FOOD_CHAR,
+        );
+
+        //
+        // Snake
+        //
+        for (self.snake.items, 0..) |pos, index| {
+            _ = nc.mvwprintw(
+                self.board.win,
+                pos.y,
+                pos.x,
+                "%lc",
+                if (index == 0) SNAKE_HEAD_CHAR else SNAKE_BODY_CHAR,
+            );
+        }
+
+        // _ = nc.box(self.board.win, 0, 0);
+        _ = nc.wnoutrefresh(self.board.win);
+
+        // _ = nc.box(self.board_boundary.win, 0, 0);
+        // _ = nc.wnoutrefresh(self.board_boundary.win);
 
         //
         // After multiple `wnoutrefresh(win)` on different named windows, call the
@@ -300,6 +378,7 @@ const Game = struct {
         // screen in one shot.
         //
         _ = nc.doupdate();
+        // _ = nc.wrefresh(self.board.win);
     }
 };
 
@@ -359,35 +438,32 @@ pub fn main() !void {
 
     _ = nc.wgetch(nc.stdscr);
 
-    // //
-    // // Game loop
-    // //
-    // let c = nc. wgetch(game.board.win);
-    // for(true) {
-    // 	switch (c) {
-    // 		case 'Q' => break;
-    // 		// Up
-    // 		case nc. KEY_E => {
-    // 			game.snake[0].y -= 1;
-    // 		};
-    // 		// Down
-    // 		case nc. KEY_D => {
-    // 			game.snake[0].y += 1;
-    // 		};
-    // 		// Left
-    // 		case nc. KEY_S => {
-    // 			game.snake[0].x -= 1;
-    // 		};
-    // 		// Right
-    // 		case nc. KEY_F => {
-    // 			game.snake[0].x += 1;
-    // 		};
-    // 		case => void;
     //
-    // 	};
-    // 	draw(&game);
-    // 	c = nc. wgetch(game.board.win);
-    // };
-
-    return;
+    // Game loop
+    //
+    var c = nc.wgetch(game.board.win);
+    while (true) {
+        switch (c) {
+            'Q' => break,
+            // Up
+            nc.KEY_E => {
+                game.snake.items[0].y -= 1;
+            },
+            // Down
+            nc.KEY_D => {
+                game.snake.items[0].y += 1;
+            },
+            // Left
+            nc.KEY_S => {
+                game.snake.items[0].x -= 1;
+            },
+            // Right
+            nc.KEY_F => {
+                game.snake.items[0].x += 1;
+            },
+            else => {},
+        }
+        game.draw();
+        c = nc.wgetch(game.board.win);
+    }
 }
