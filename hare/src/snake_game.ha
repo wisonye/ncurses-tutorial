@@ -103,8 +103,13 @@ fn init_game(screen_width: u32, screen_height: u32) Game = {
 		top = board_boundary_top + 1,
 		width = BOARD_WIDTH:int - 2,
 		height = BOARD_HEIGHT:int - 2,
-		win = nc::derwin(
-			origin_win: board_boundary.win,
+		// win = nc::derwin(
+		// 	origin_win: board_boundary.win,
+		// 	BOARD_HEIGHT: int - 2,
+		// 	BOARD_WIDTH: int - 2,
+		// 	board_boundary_top + 1,
+		// 	board_boundary_left + 1),
+		win = nc::newwin(
 			BOARD_HEIGHT: int - 2,
 			BOARD_WIDTH: int - 2,
 			board_boundary_top + 1,
@@ -143,8 +148,8 @@ fn init_game(screen_width: u32, screen_height: u32) Game = {
 	// Snake head
 	//
 	append(self.snake, nc::CursorPosition {
-			x = get_random_size(BOARD_WIDTH - 1): int,
-			y = get_random_size(BOARD_HEIGHT - 1): int,
+		x = get_random_size(BOARD_WIDTH - 1): int,
+		y = get_random_size(BOARD_HEIGHT - 1): int,
 	});
 
 	//
@@ -164,6 +169,7 @@ fn deinit_game(self: *Game) void = {
 		nc::delwin(self.board.win);
 		nc::delwin(self.board_boundary.win);
 		nc::delwin(self.topbar.win);
+		self.is_destroy = true;
 	};
 };
 
