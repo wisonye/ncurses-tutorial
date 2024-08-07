@@ -7,9 +7,12 @@ use types::c;
 // def ENABLE_DEBUG_PRINT: bool = true;
 def ENABLE_DEBUG_PRINT: bool = false;
 
-def FOOD_CHAR: nc::chtype = '󱗾';
-def SNAKE_HEAD_CHAR: nc::chtype = '';
-def SNAKE_BODY_CHAR: nc::chtype = '';
+// def FOOD_CHAR: nc::chtype = '󱗾';
+// def SNAKE_HEAD_CHAR: nc::chtype = '';
+// def SNAKE_BODY_CHAR: nc::chtype = '';
+def FOOD_CHAR: nc::chtype = 'F';
+def SNAKE_HEAD_CHAR: nc::chtype = 'H';
+def SNAKE_BODY_CHAR: nc::chtype = 'B';
 
 def GAME_TITLE:str = "[ SNAKE GAME ]\0";
 def GAME_KEYBINDINDS: str = "E/D/S/F: Direction, P: Pause/Resume, Q: Exit game\0";
@@ -196,7 +199,7 @@ fn draw_board_boundary(self: *Game) void = {
 };
 
 fn draw_topbar(self: *const Game) void = {
-	nc::wclear(self.topbar.win);
+	nc::werase(self.topbar.win);
 	nc::box(self.topbar.win, 0, 0);
 
 	let row = 1i;
@@ -245,7 +248,7 @@ fn draw_topbar(self: *const Game) void = {
 };
 
 fn draw(self: *const Game) void = {
-	nc::wclear(self.board.win);
+	nc::werase(self.board.win);
 
 	//
 	// Top bar

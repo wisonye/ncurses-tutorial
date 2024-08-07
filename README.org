@@ -136,7 +136,13 @@ The =ncurses= package supports:
 *** Arch Linux
 
 #+BEGIN_SRC bash
-  doas pacman --sync --info ncurses
+  doas pacman --sync --refresh ncurses
+#+END_SRC
+
+*** FreeBSD
+
+#+BEGIN_SRC bash
+  doas pkg install ncurses
 #+END_SRC
 
 
@@ -515,6 +521,25 @@ When calling =mvwprintw= or =wmove= with the given window, the =y,x= you pass in
 
 *** Drawing performance
 
+**** Use =werase= instead of =wclear=!!!
+
+#+BEGIN_SRC bash
+  erase, werase
+      The erase and werase routines copy blanks to every position in the
+      window, clearing the screen.
+
+      Blanks created by erasure have the current background rendition (as set
+      by wbkgdset(3X)) merged into them.
+
+  clear, wclear
+      The clear and wclear routines are like erase and werase, but they also
+      call clearok(3X), so that the screen is cleared completely on the next
+      call to wrefresh for that window and repainted from scratch.
+#+END_SRC
+
+
+**** Use =wnoutrefresh/doupdate= instead of =wrefresh=!!!
+
 Here is the most important thing you need to know about the drawing performance, you can find this info by running =man curs_refresh=:
 
 
@@ -562,9 +587,9 @@ That said, if you want to redraw/update a few windows, you better do this instea
 
 Pay attention that: 
 
-if you call any of these funciton: =refresh(), getch(), wrefresh(stdscr), wgetch(stdscr)=, then the screen is immediately cleared and repainted from scratch. That also broke your drawing optimization!!!
-if you call any of these funciton: =refresh(), getch(), wrefresh(stdscr), wgetch(stdscr)=, then the screen is immediately cleared and repainted from scratch. That also broke your drawing optimization!!!
-if you call any of these funciton: =refresh(), getch(), wrefresh(stdscr), wgetch(stdscr)=, then the screen is immediately cleared and repainted from scratch. That also broke your drawing optimization!!!
+If you call any of these funciton: =refresh(), getch(), wrefresh(stdscr), wgetch(stdscr)=, then the screen is immediately cleared and repainted from scratch. That also broke your drawing optimization!!!
+If you call any of these funciton: =refresh(), getch(), wrefresh(stdscr), wgetch(stdscr)=, then the screen is immediately cleared and repainted from scratch. That also broke your drawing optimization!!!
+If you call any of these funciton: =refresh(), getch(), wrefresh(stdscr), wgetch(stdscr)=, then the screen is immediately cleared and repainted from scratch. That also broke your drawing optimization!!!
 
 
 ** =Video Attributes=

@@ -4,12 +4,12 @@ const time = std.time;
 
 const ENABLE_DEBUG_PRINT: bool = false;
 
-const FOOD_CHAR: nc.chtype = '󱗾';
-const SNAKE_HEAD_CHAR: nc.chtype = '';
-const SNAKE_BODY_CHAR: nc.chtype = '';
-// const FOOD_CHAR: nc.chtype = 'F';
-// const SNAKE_HEAD_CHAR: nc.chtype = 'H';
-// const SNAKE_BODY_CHAR: nc.chtype = 'B';
+// const FOOD_CHAR: nc.chtype = '󱗾';
+// const SNAKE_HEAD_CHAR: nc.chtype = '';
+// const SNAKE_BODY_CHAR: nc.chtype = '';
+const FOOD_CHAR: nc.chtype = 'F';
+const SNAKE_HEAD_CHAR: nc.chtype = 'H';
+const SNAKE_BODY_CHAR: nc.chtype = 'B';
 
 const GAME_TITLE: []const u8 = "[ SNAKE GAME ]";
 const GAME_KEYBINDINDS: []const u8 = "E/D/S/F: Direction, P: Pause/Resume, Q: Exit game";
@@ -224,7 +224,7 @@ const Game = struct {
     }
 
     pub fn draw_topbar(self: *const Game) void {
-        _ = nc.wclear(self.topbar.win);
+        _ = nc.werase(self.topbar.win);
         _ = nc.box(self.topbar.win, 0, 0);
 
         var row: c_int = 1;
@@ -295,7 +295,7 @@ const Game = struct {
     }
 
     fn draw(self: *const Game) void {
-        _ = nc.wclear(self.board.win);
+        _ = nc.werase(self.board.win);
 
         // --TODO: Deubg info should print to bottom window (under
         //         the border window)!!!

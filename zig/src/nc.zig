@@ -39,6 +39,8 @@ pub extern fn initscr() *WINDOW;
 //
 // Clear and refresh related
 //
+pub extern fn erase() c_int;
+pub extern fn werase(win: ?*WINDOW) c_int;
 pub extern fn wclear(win: ?*WINDOW) c_int;
 pub extern fn wrefresh(win: ?*WINDOW) c_int;
 
