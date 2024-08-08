@@ -1,4 +1,7 @@
 // zig fmt: off
+
+const builtin = @import("builtin");
+
 //
 pub const WINDOW = anyopaque;
 pub const chtype = u32;
@@ -6,19 +9,67 @@ pub const chtype = u32;
 //
 // Locale related
 //
-pub const LC_CTYPE: c_int               = 0;
-pub const LC_NUMERIC: c_int             = 1;
-pub const LC_TIME: c_int                = 2;
-pub const LC_COLLATE: c_int             = 3;
-pub const LC_MONETARY: c_int            = 4;
-pub const LC_MESSAGES: c_int            = 5;
-pub const LC_ALL: c_int                 = 6;
-pub const LC_PAPER: c_int               = 7;
-pub const LC_NAME: c_int                = 8;
-pub const LC_ADDRESS: c_int             = 9;
-pub const LC_TELEPHONE: c_int           = 10;
-pub const LC_MEASUREMENT: c_int         = 11;
-pub const LC_IDENTIFICATION: c_int      = 12;
+
+pub const LC_CTYPE: c_int = switch (builtin.os.tag) {
+    .linux => 0,
+    .freebsd => 2,
+    else => unreachable,
+};
+pub const LC_NUMERIC: c_int = switch (builtin.os.tag) {
+    .linux => 1,
+    .freebsd => 4,
+    else => unreachable,
+};
+pub const LC_TIME: c_int = switch (builtin.os.tag) {
+    .linux => 2,
+    .freebsd => 5,
+    else => unreachable,
+};
+pub const LC_COLLATE: c_int = switch (builtin.os.tag) {
+    .linux => 3,
+    .freebsd => 1,
+    else => unreachable,
+};
+pub const LC_MONETARY: c_int = switch (builtin.os.tag) {
+    .linux => 4,
+    .freebsd => 3,
+    else => unreachable,
+};
+pub const LC_MESSAGES: c_int = switch (builtin.os.tag) {
+    .linux => 5,
+    .freebsd => 6,
+    else => unreachable,
+};
+pub const LC_ALL: c_int = switch (builtin.os.tag) {
+    .linux => 6,
+    .freebsd => 0,
+    else => unreachable,
+};
+pub const LC_PAPER: c_int = switch (builtin.os.tag) {
+    .linux => 7,
+    else => unreachable,
+};
+pub const LC_NAME: c_int = switch (builtin.os.tag) {
+    .linux => 8,
+    else => unreachable,
+};
+pub const LC_ADDRESS: c_int = switch (builtin.os.tag) {
+    .linux => 9,
+    else => unreachable,
+};
+pub const LC_TELEPHONE: c_int = switch (builtin.os.tag) {
+    .linux => 10,
+    else => unreachable,
+};
+pub const LC_MEASUREMENT: c_int = switch (builtin.os.tag) {
+    .linux => 11,
+    else => unreachable,
+};
+pub const LC_IDENTIFICATION: c_int = switch (builtin.os.tag) {
+    .linux => 12,
+    else => unreachable,
+};
+
 pub extern fn setlocale(
     category: c_int,
     locale: ?[*]const u8,
@@ -692,7 +743,13 @@ pub const PopupWindow = struct {
     height: c_int,
 };
 
-pub fn create_popup_window(left: c_int, top: c_int, width: c_int, height: c_int, with_default_border: bool) PopupWindow {
+pub fn create_popup_window(
+    left: c_int,
+    top: c_int,
+    width: c_int,
+    height: c_int,
+    with_default_border: bool,
+) PopupWindow {
     var w = PopupWindow{
         .left = left,
         .top = top,

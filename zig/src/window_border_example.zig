@@ -201,7 +201,13 @@ pub fn main() void {
 //
 //
 //
-fn create_border_window(left: c_int, top: c_int, width: c_int, height: c_int, border_config: nc.WindowBorderConfig) nc.PopupWindow {
+fn create_border_window(
+    left: c_int,
+    top: c_int,
+    width: c_int,
+    height: c_int,
+    border_config: nc.WindowBorderConfig,
+) nc.PopupWindow {
     const popup = nc.create_popup_window(left, top, width, height, false);
 
     // Draw border

@@ -4,12 +4,12 @@ const time = std.time;
 
 const ENABLE_DEBUG_PRINT: bool = false;
 
-// const FOOD_CHAR: nc.chtype = '󱗾';
-// const SNAKE_HEAD_CHAR: nc.chtype = '';
-// const SNAKE_BODY_CHAR: nc.chtype = '';
-const FOOD_CHAR: nc.chtype = 'F';
-const SNAKE_HEAD_CHAR: nc.chtype = 'H';
-const SNAKE_BODY_CHAR: nc.chtype = 'B';
+const FOOD_CHAR: nc.chtype = '󱗾';
+const SNAKE_HEAD_CHAR: nc.chtype = '';
+const SNAKE_BODY_CHAR: nc.chtype = '';
+// const FOOD_CHAR: nc.chtype = 'F';
+// const SNAKE_HEAD_CHAR: nc.chtype = 'H';
+// const SNAKE_BODY_CHAR: nc.chtype = 'B';
 
 const GAME_TITLE: []const u8 = "[ SNAKE GAME ]";
 const GAME_KEYBINDINDS: []const u8 = "E/D/S/F: Direction, P: Pause/Resume, Q: Exit game";
@@ -435,8 +435,6 @@ pub fn main() !void {
 
     game.draw_board_boundary();
     game.draw();
-
-    _ = nc.wgetch(nc.stdscr);
 
     //
     // Game loop
