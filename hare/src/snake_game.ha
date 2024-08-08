@@ -7,12 +7,12 @@ use types::c;
 // def ENABLE_DEBUG_PRINT: bool = true;
 def ENABLE_DEBUG_PRINT: bool = false;
 
-// def FOOD_CHAR: nc::chtype = '󱗾';
-// def SNAKE_HEAD_CHAR: nc::chtype = '';
-// def SNAKE_BODY_CHAR: nc::chtype = '';
-def FOOD_CHAR: nc::chtype = 'F';
-def SNAKE_HEAD_CHAR: nc::chtype = 'H';
-def SNAKE_BODY_CHAR: nc::chtype = 'B';
+def FOOD_CHAR: nc::chtype = '󱗾';
+def SNAKE_HEAD_CHAR: nc::chtype = '';
+def SNAKE_BODY_CHAR: nc::chtype = '';
+// def FOOD_CHAR: nc::chtype = 'F';
+// def SNAKE_HEAD_CHAR: nc::chtype = 'H';
+// def SNAKE_BODY_CHAR: nc::chtype = 'B';
 
 def GAME_TITLE:str = "[ SNAKE GAME ]\0";
 def GAME_KEYBINDINDS: str = "E/D/S/F: Direction, P: Pause/Resume, Q: Exit game\0";
